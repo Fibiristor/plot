@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="jquery.js" charset="utf-8"></script>
+    <script src="d3.js" charset="utf-8"></script>
+    <script src="ATR.js" charset="utf-8"></script>
+    <script src="getData.js" charset="UTF-8"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>
+     var days = 20;
+     var csvData = getData("candle.csv", "text", false);
+     var ATRData = ATR(csvData,days);
+</script>
+
+
+</body>
+</html>
