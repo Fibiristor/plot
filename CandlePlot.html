@@ -5,7 +5,8 @@
     <title>CandlePlot</title>
     <script src="jquery.js" charset="UTF-8"></script>
     <script src="d3.js" charset="utf-8"></script>
-    <script src="getData.js" charset="UTF-8"></script>
+    <script src="calculate.js" charset="UTF-8"></script>
+    <script src="plotUtil.js" charset="UTF-8"></script>
     <script src="average.js" charset="UTF-8"></script>
     <script src="channel.js" charset="UTF-8"></script>
     <script src="ATR.js" charset="UTF-8"></script>
@@ -37,7 +38,7 @@
 
     //candle原始数据
     {
-        var csvData = getData('candle.csv', 'text', false);
+        var csvData = getDataFromCSV('candle.csv', 'text', false);
     }
 
     //交易数据
@@ -115,7 +116,7 @@
     var height = 400;
 
     //绘图区域边框尺寸
-    var padding = {top: 30, right: 30, bottom: 30, left: 60};
+    var padding = {top: 30, right: 30, bottom: 30, left: 70};
 
 
     //获取最高价中的最大值
@@ -132,7 +133,7 @@
     //candle部分x轴比例尺
     var xScale = d3.scale.ordinal()  //序数比例尺
             .domain(tDate)
-            .rangeRoundBands([0, width - padding.left - padding.right], 0.3);
+            .rangeBands([0, width - padding.left - padding.right],0.2);
 
     //candle部分y轴比例尺
     var yScale = d3.scale.linear()  //线性比例尺
@@ -258,6 +259,7 @@
                 .attr("stroke", function (d) {
                     return (d[1] - d[4] <= 0) ? "red" : "green"
                 })
+                .attr("stroke-width","0.3px")
                 .attr("fill", function (d) {
                     return (d[1] - d[4]) <= 0 ? "white" : "green"
                 })
@@ -312,22 +314,22 @@
         var volumeWidth = width;
         var volumeHeight = 120;
 
-        var volumePadding = {top: 20, right: 30, bottom: 20, left: 60};
-
+//        var volumePadding = {top: 20, right: 30, bottom: 20, left: 60};
+//
         //定义volume数组
-        var volume = [];
+        var volumeData = [];
         //数组赋值
         for (var i = 0; i < csvData.length; i++) {
-            volume[i] = parseInt(csvData[i][5]);
+            volumeData.push(parseInt(csvData[i][5]));
         }
-
-        //volume最大值
-        var volumeMax = d3.max(volume);
-
-        //volume y轴比例尺
-        var yVolumeScale = d3.scale.linear()
-                .domain([0, volumeMax])
-                .rangeRound([0, (volumeHeight - volumePadding.bottom - volumePadding.top)]);
+//
+//        //volume最大值
+//        var volumeMax = d3.max(volume);
+//
+//        //volume y轴比例尺
+//        var yVolumeScale = d3.scale.linear()
+//                .domain([0, volumeMax])
+//                .rangeRound([0, (volumeHeight - volumePadding.bottom - volumePadding.top)]);
 
         //添加svg元素
         var volumeSvg = d3.select("#volume")
@@ -335,59 +337,61 @@
                 .attr("width", volumeWidth)
                 .attr("height", volumeHeight);
 
-        //往svg元素中添加rect元素
-        var volumeRect = volumeSvg.selectAll("volumeRect")
-                .data(volume)
-                .enter()
-                .append("rect")
-                .attr("stroke", "steelblue")
-                //                            .attr("fill", "white")
-                //                            .attr("height", 0)
-                //                            //过渡
-                //                            .transition()
-                //                            .duration(1500)
-                .attr("fill", "url(#myLinearGradient1)")
-                .attr("x", function (d, i) {
-                    return volumePadding.left + xScale(tDate[i]);
-                })
-                .attr("y", function (d) {
-                    return volumeHeight - volumePadding.bottom - yVolumeScale(d);
-                })
-                .attr("width", xScale.rangeBand())
-                .attr("height", function (d) {
-                    return yVolumeScale(d);
-                })
-                .on("mouseleave", function () {
-                    d3.select(this).attr("fill", "url(#myLinearGradient1)");
-                    d3.select(this).attr("stroke", "steelblue");
-                })
-                .on("mouseenter", function () {
-                    d3.select(this).attr("fill", "orange");
-                    d3.select(this).attr("stroke", "orange");
-                });
-//                .on("mouseleave",function () {
-//                    d3.select(this).attr("fill","steelblue");
-//
+        plotVolume(volumeSvg, tDate, volumeData);
+
+//        //往svg元素中添加rect元素
+//        var volumeRect = volumeSvg.selectAll("volumeRect")
+//                .data(volume)
+//                .enter()
+//                .append("rect")
+//                .attr("stroke", "steelblue")
+//                //                            .attr("fill", "white")
+//                //                            .attr("height", 0)
+//                //                            //过渡
+//                //                            .transition()
+//                //                            .duration(1500)
+//                .attr("fill", "url(#myLinearGradient1)")
+//                .attr("x", function (d, i) {
+//                    return volumePadding.left + xScale(tDate[i]);
 //                })
-//                .on("mouseenter",function () {
-//                    d3.select(this).attr("fill", "white");
-//
+//                .attr("y", function (d) {
+//                    return volumeHeight - volumePadding.bottom - yVolumeScale(d);
+//                })
+//                .attr("width", xScale.rangeBand())
+//                .attr("height", function (d) {
+//                    return yVolumeScale(d);
+//                })
+//                .on("mouseleave", function () {
+//                    d3.select(this).attr("fill", "url(#myLinearGradient1)");
+//                    d3.select(this).attr("stroke", "steelblue");
+//                })
+//                .on("mouseenter", function () {
+//                    d3.select(this).attr("fill", "orange");
+//                    d3.select(this).attr("stroke", "orange");
 //                });
-
-
-        //yVolume轴坐标
-        var yVolumeAxis = d3.svg.axis()
-                .scale(yVolumeScale)
-                .orient("right");
-
-        //翻转y坐标
-        yVolumeScale.range([volumeHeight - volumePadding.bottom - volumePadding.top, 0]);
-
-        //在svg元素中添加g元素，并放置y坐标轴
-        volumeSvg.append("g")
-                .attr("class", "axis")
-                .attr("transform", "translate(" + volumePadding.left + "," + volumePadding.top + ")")
-                .call(yVolumeAxis);
+////                .on("mouseleave",function () {
+////                    d3.select(this).attr("fill","steelblue");
+////
+////                })
+////                .on("mouseenter",function () {
+////                    d3.select(this).attr("fill", "white");
+////
+////                });
+//
+//
+//        //yVolume轴坐标
+//        var yVolumeAxis = d3.svg.axis()
+//                .scale(yVolumeScale)
+//                .orient("right");
+//
+//        //翻转y坐标
+//        yVolumeScale.range([volumeHeight - volumePadding.bottom - volumePadding.top, 0]);
+//
+//        //在svg元素中添加g元素，并放置y坐标轴
+//        volumeSvg.append("g")
+//                .attr("class", "axis")
+//                .attr("transform", "translate(" + volumePadding.left + "," + volumePadding.top + ")")
+//                .call(yVolumeAxis);
 
 
     }
@@ -496,7 +500,7 @@
 
         //控制x轴输出密度的数组
         var indexNeed = new Array();
-        var density = 20;
+        var density = 40;
         for (var k = 0; k < tDate.length; k++) {
             if (k % density === 1) {
                 indexNeed[k] = k;

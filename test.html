@@ -5,15 +5,30 @@
     <title>Title</title>
     <script src="jquery.js" charset="utf-8"></script>
     <script src="d3.js" charset="utf-8"></script>
-    <script src="ATR.js" charset="utf-8"></script>
-    <script src="getData.js" charset="UTF-8"></script>
+    <script src="plotUtil.js" charset="utf-8"></script>
+    <script src="calculate.js" charset="UTF-8"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <script>
-     var days = 20;
-     var csvData = getData("candle.csv", "text", false);
-     var ATRData = ATR(csvData,days);
+    var csvData = getDataFromCSV("candle.csv", "text", false);
+    var volumeData = [];
+    for (var i = 0; i < csvData.length; i++) {
+        volumeData.push(parseInt(csvData[i][5]));
+    }
+    var tradeDate = [];
+    for (var i = 0; i < csvData.length; i++) {
+        tradeDate.push(csvData[i][0]);
+    }
+
+    var svg = d3.select("body")
+            .append("svg")
+            .style("width", 800)
+            .style("height", 200);
+
+    plotVolume(svg, tradeDate, volumeData);
+
+
 </script>
 
 

@@ -17,7 +17,7 @@ function nDaysChanel() {
     var profitData = [];        //每日利润数组
 
     //candle原始数据
-    var csvData = getData('candle.csv', 'text', false);
+    var csvData = getDataFromCSV('candle.csv', 'text', false);
 
     //N 波动性：真实波动幅度的20日指数移动平均值
     var ATRData = ATR(csvData, inDays);
