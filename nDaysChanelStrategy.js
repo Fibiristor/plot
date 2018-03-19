@@ -1,13 +1,13 @@
 /**
  * Created by fibiristor on 2018/3/9.
  */
-function nDaysChanel() {
-
-    var inDays = 20;            //入场
-
-    var outDays = 10;           //出场
-
-    var balance = 100000;  //初始资金
+/*
+* dataSourceFile:csv文件名
+* inDays:入场突破天数
+* outDays:退出突破天数
+* balance:初始资金
+* */
+function nDaysChanelStrategy(dataSourceFile,inDays,outDays,balance) {
 
     var profit = 0;             //利润
     // var risk = 0.7;             //可控仓位上线
@@ -17,7 +17,7 @@ function nDaysChanel() {
     var profitData = [];        //每日利润数组
 
     //candle原始数据
-    var csvData = getDataFromCSV('candle.csv', 'text', false);
+    var csvData = getDataFromCSV(dataSourceFile, 'text', false);
 
     //N 波动性：真实波动幅度的20日指数移动平均值
     var ATRData = ATR(csvData, inDays);
@@ -87,6 +87,8 @@ function nDaysChanel() {
         }
         return minValues;
     }
+
+    //--------------------------------------------------------------------
 
     var inDaysTopValues = nDaysHigh(csvData, inDays);  //多头入场 通道上轨
 
