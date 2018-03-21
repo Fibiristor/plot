@@ -14,397 +14,398 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="plotArea" style="background-color:white;">
-    <div id="candle"></div>
-    <div id="volume"></div>
+<style>
+    #customers {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #customers td, #customers th {
+        font-size: 0.4em;
+        border: 1px solid #98bf21;
+        padding: 3px 7px 2px 7px;
+    }
+
+    #customers th {
+        font-size: 1em;
+        text-align: left;
+        padding-top: 5px;
+        padding-bottom: 4px;
+        background-color: #A7C942;
+        color: #ffffff;
+    }
+
+    #customers tr.alt td {
+        color: #000000;
+        background-color: #EAF2D3;
+    }
+</style>
+<div style="border: dashed">
+    <div id="plotArea" style="background-color:white;width: 70%;height:600px;float:left; display:inline"></div>
+    <div id="tableArea" style="background-color:white;width: 30%;height:600px;float:left; display:inline;position:absolute;overflow-y:auto">
+        <table id="customers">
+            <thead>
+            <tr>
+                <th>序号</th>
+                <th>交易类型</th>
+                <th>成交日期</th>
+                <th>成交价格</th>
+                <th>数量</th>
+                <th>交易编号</th>
+                <th>关联编号</th>
+                <th>持仓时间</th>
+                <th>利润</th>
+                <th>利润率</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
 </div>
 
 
-<svg>
-    //定义渐变
-    <defs>
-        <linearGradient id="myLinearGradient1"
-                        x1="0%" y1="0%"
-                        x2="0%" y2="100%"
-                        spreadMethod="pad">
-            <stop offset="0%" stop-color="steelblue" stop-opacity="1"/>
-            <stop offset="100%" stop-color="white" stop-opacity="1"/>
-        </linearGradient>
-    </defs>
-</svg>
+<!--<svg>-->
+<!--//定义渐变-->
+<!--<defs>-->
+<!--<linearGradient id="myLinearGradient1"-->
+<!--x1="0%" y1="0%"-->
+<!--x2="0%" y2="100%"-->
+<!--spreadMethod="pad">-->
+<!--<stop offset="0%" stop-color="steelblue" stop-opacity="1"/>-->
+<!--<stop offset="100%" stop-color="white" stop-opacity="1"/>-->
+<!--</linearGradient>-->
+<!--</defs>-->
+<!--</svg>-->
 
 <script>
 
+    function cellPlot(cellId, dataSourceFile) {
 
-    //candle原始数据
-    {
-        var csvData = getDataFromCSV('candle.csv', 'text', false);
-    }
+        var candle = document.createElement("div");
+        candle.style.width = "auto";
+        candle.style.height = "400px";
+        document.getElementById(cellId).appendChild(candle);
 
-    //交易数据
-    {
+        var volume = document.createElement("div");
+        volume.style.width = "auto";
+        volume.style.height = "200px";
+        document.getElementById(cellId).appendChild(volume);
 
-        var tradeData = nDaysChanel().tradeData;                //交易数据
-        var profitData = nDaysChanel().profitData;              //利润数据
-//        console.log(tradeData);
-//        console.log(profitData);
-
-
-        //交易连线数据
-        var tradeArray = [];
-        for (var i = 0; i < tradeData.length; i++) {
-            if (tradeData[i].direction == "long") {
-                var buyDate = tradeData[i].tradeDate;
-                var buyPrice = tradeData[i].price;
-                var code = tradeData[i].code;
-                for (var j = i + 1; j < tradeData.length; j++) {
-                    if (tradeData[j].direction == "long-empty" && tradeData[j].preCode == code) {
-                        var sellPrice = tradeData[j].price;
-                        var sellDate = tradeData[j].tradeDate;
-                        var preCode = tradeData[j].preCode;
-                        tradeArray.push({
-                            buyPrice: buyPrice,
-                            buyDate: buyDate,
-                            code: code,
-                            sellPrice: sellPrice,
-                            sellDate: sellDate,
-                            preCode: preCode
-                        });
-                        break;
-                    }
-                }
-            }
-            if (tradeData[i].direction == "short") {
-                var buyDate = tradeData[i].tradeDate;
-                var buyPrice = tradeData[i].price;
-                var code = tradeData[i].code;
-                for (var j = i + 1; j < tradeData.length; j++) {
-                    if (tradeData[j].direction == "short-empty" && tradeData[j].preCode == code) {
-                        var sellPrice = tradeData[j].price;
-                        var sellDate = tradeData[j].tradeDate;
-                        var preCode = tradeData[j].preCode;
-                        tradeArray.push({
-                            buyPrice: buyPrice,
-                            buyDate: buyDate,
-                            code: code,
-                            sellPrice: sellPrice,
-                            sellDate: sellDate,
-                            preCode: preCode
-                        });
-                        break;
-                    }
-                }
-
-            } else if (tradeData[i].direction == "long-empty" || tradeData[i].direction == "short-empty") {
-                continue;
-            }
+        //candle原始数据
+        {
+            var csvData = getDataFromCSV(dataSourceFile, 'text', false);
         }
 
-//        console.log(tradeArray);
+        //策略交易数据
+        {
 
-    }
+            var inDays = 20;            //突破天数
+            var outDays = 10;           //出场天数
+            var balance = 100000;       //初始资金
 
-    //日期数据数组
-    var tDate = [];
-    for (var i = 0; i < csvData.length; i++) {
-        tDate[i] = csvData[i][0];
-    }
-
-
-    //绘图区域尺寸
-    var width = 1200;
-    var height = 400;
-
-    //绘图区域边框尺寸
-    var padding = {top: 30, right: 30, bottom: 30, left: 70};
+            var dataOfChanelStrategy = nDaysChanelStrategy(dataSourceFile, inDays, outDays, balance);
+            var tradeData = dataOfChanelStrategy.tradeData;                //交易数据
+            var profitData = dataOfChanelStrategy.profitData;              //利润数据
 
 
-    //获取最高价中的最大值
-    var valueMax = d3.max(csvData, function (d) {
-        return d[2];
-    });
+            //交易连线数据
+            var tradeArray = [];
+            for (var i = 0; i < tradeData.length; i++) {
+                if (tradeData[i].direction == "long") {
+                    var buyDate = tradeData[i].tradeDate;
+                    var buyPrice = tradeData[i].price;
+                    var code = tradeData[i].code;
+                    for (var j = i + 1; j < tradeData.length; j++) {
+                        if (tradeData[j].direction == "long-empty" && tradeData[j].preCode == code) {
+                            var sellPrice = tradeData[j].price;
+                            var sellDate = tradeData[j].tradeDate;
+                            var preCode = tradeData[j].preCode;
+                            tradeArray.push({
+                                buyPrice: buyPrice,
+                                buyDate: buyDate,
+                                code: code,
+                                sellPrice: sellPrice,
+                                sellDate: sellDate,
+                                preCode: preCode
+                            });
+                            break;
+                        }
+                    }
+                }
+                if (tradeData[i].direction == "short") {
+                    var buyDate = tradeData[i].tradeDate;
+                    var buyPrice = tradeData[i].price;
+                    var code = tradeData[i].code;
+                    for (var j = i + 1; j < tradeData.length; j++) {
+                        if (tradeData[j].direction == "short-empty" && tradeData[j].preCode == code) {
+                            var sellPrice = tradeData[j].price;
+                            var sellDate = tradeData[j].tradeDate;
+                            var preCode = tradeData[j].preCode;
+                            tradeArray.push({
+                                buyPrice: buyPrice,
+                                buyDate: buyDate,
+                                code: code,
+                                sellPrice: sellPrice,
+                                sellDate: sellDate,
+                                preCode: preCode
+                            });
+                            break;
+                        }
+                    }
 
-    //获取最低价中的最小值
-    var valueMin = d3.min(csvData, function (d) {
-        return d[3];
-    });
+                } else if (tradeData[i].direction == "long-empty" || tradeData[i].direction == "short-empty") {
+                    continue;
+                }
+            }
+
+        }
+
+        //日期数据数组
+        var tDate = [];
+        for (var i = 0; i < csvData.length; i++) {
+            tDate[i] = csvData[i][0];
+        }
 
 
-    //candle部分x轴比例尺
-    var xScale = d3.scale.ordinal()  //序数比例尺
-            .domain(tDate)
-            .rangeBands([0, width - padding.left - padding.right],0.2);
+        //绘图区域尺寸
+        var width = document.getElementById(cellId).firstChild.offsetWidth;
+        var height = 400;
 
-    //candle部分y轴比例尺
-    var yScale = d3.scale.linear()  //线性比例尺
-            .domain([valueMin, valueMax])
-            .rangeRound([0, height - padding.top - padding.bottom]);
+        //绘图区域边框尺寸
+        var padding = {top: 30, right: 70, bottom: 30, left: 70};
 
 
-    //在candle区域中添加svg绘图区域
-    var svg = d3.select("#candle")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height);
+        //获取最高价中的最大值
+        var valueMax = d3.max(csvData, function (d) {
+            return d[2];
+        });
+
+        //获取最低价中的最小值
+        var valueMin = d3.min(csvData, function (d) {
+            return d[3];
+        });
 
 
-    //在body中添加div元素作为鼠标提示框
-    var tooltip = d3.select("body")
-            .append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0.0);
+        //candle部分x轴比例尺
+        var xScale = d3.scale.ordinal()  //序数比例尺
+                .domain(tDate)
+                .rangeBands([0, width - padding.left - padding.right], 0.2);
+
+        //candle部分y轴比例尺
+        var yScale = d3.scale.linear()  //线性比例尺
+                .domain([valueMin, valueMax])
+                .rangeRound([0, height - padding.top - padding.bottom]);
 
 
-    //鼠标横纵轴坐标
-    {
-        //svg元素内放置一个透明的用于接收鼠标移动的矩形
-        svg.append("rect")
-                .attr("class", "overlay")
-                .attr("x", padding.left)
-                .attr("y", padding.top)
-                .attr("width", width - padding.left - padding.right)
-                .attr("height", height - padding.top - padding.bottom)
-                .on("mouseover", mouseover)
-                .on("mouseout", mouseout)
-                .on("mousemove", mousemove);
+//        var elementParent = document.getElementById("plotArea").childNodes;
+//        var elementFirst = elementParent[1];
 
-        //随鼠标移动显示y轴坐标数值
-        //在body中添加div,通过设置div的属性（位置，html,opacity)，跟随鼠标来动态显示y轴数据
-        var yAxisPosition = d3.select("body")
+        //获取绘图区域的所有子元素
+        var cells = document.getElementById(cellId).childNodes;
+        //获取第一个div元素
+        var candleCell = cells[0];
+        var svg = d3.select(candleCell)
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+
+        //在body中添加div元素作为鼠标提示框
+        var tooltip = d3.select("body")
                 .append("div")
-                .attr("class", "yAxisValue")
+                .attr("class", "tooltip")
                 .style("opacity", 0.0);
 
-        //鼠标对齐线
-        var focusLine = svg.append("g")
-                .attr("class", "focusLine")
-                .style("opacity", 0.0);
-        //横线
-        //    var hLine = focusLine.append("line");
 
-        //竖线
-        //    var vLine = focusLine.append("line");
+        //鼠标横纵轴坐标
+        {
+            //svg元素内放置一个透明的用于接收鼠标移动的矩形
+            svg.append("rect")
+                    .attr("class", "overlay")
+                    .attr("x", padding.left)
+                    .attr("y", padding.top)
+                    .attr("width", width - padding.left - padding.right)
+                    .attr("height", height - padding.top - padding.bottom)
+                    .on("mouseover", mouseover)
+                    .on("mouseout", mouseout)
+                    .on("mousemove", mousemove);
+
+            //随鼠标移动显示y轴坐标数值
+            //在body中添加div,通过设置div的属性（位置，html,opacity)，跟随鼠标来动态显示y轴数据
+            var yAxisPosition = d3.select("body")
+                    .append("div")
+                    .attr("class", "yAxisValue")
+                    .style("opacity", 0.0);
+
+            //鼠标对齐线
+            var focusLine = svg.append("g")
+                    .attr("class", "focusLine")
+                    .style("opacity", 0.0);
+            //横线
+            //    var hLine = focusLine.append("line");
+
+            //竖线
+            //    var vLine = focusLine.append("line");
 
 
-    }
+        }
 
-    //网格
-    {
-        //网格横向数据声明
-        var gridData = new Array();
-        for (var x = 0; x < yScale.ticks().length; x++) {
-            gridData[x] = new Array();
-            for (var y = 0; y < 2; y++) {
-                gridData[x][y] = new Array();
-                for (var z = 0; z < 2; z++) {
-                    gridData[x][y][z] = 0;
-                    gridData[x][y][z] = 0;
+        //网格
+        {
+            //网格横向数据声明
+            var gridData = new Array();
+            for (var x = 0; x < yScale.ticks().length; x++) {
+                gridData[x] = new Array();
+                for (var y = 0; y < 2; y++) {
+                    gridData[x][y] = new Array();
+                    for (var z = 0; z < 2; z++) {
+                        gridData[x][y][z] = 0;
+                        gridData[x][y][z] = 0;
+                    }
                 }
             }
-        }
 
-        //网格横向数据赋值
-        for (var x = 0; x < yScale.ticks().length; x++) {
-            for (var y = 0; y < 2; y++) {
-                gridData[x][y][0] = padding.left + xScale.rangeExtent()[y];
-                gridData[x][y][1] = height - yScale(yScale.ticks()[x]) - padding.bottom;
+            //网格横向数据赋值
+            for (var x = 0; x < yScale.ticks().length; x++) {
+                for (var y = 0; y < 2; y++) {
+                    gridData[x][y][0] = padding.left + xScale.rangeExtent()[y];
+                    gridData[x][y][1] = height - yScale(yScale.ticks()[x]) - padding.bottom;
+                }
             }
+
+            //网格路径生成器
+            var gridPath = d3.svg.line();
+
+            //绘制横向网格
+            for (var i = 0; i < gridData.length; i++) {
+                svg.append("path")
+                        .attr("d", gridPath(gridData[i]))
+                        .attr("stroke", "grey")
+                        .attr("stroke-width", "1px")
+                        .attr("fill", "none");
+
+            }
+
         }
 
-        //网格路径生成器
-        var gridPath = d3.svg.line();
-
-        //绘制横向网格
-        for (var i = 0; i < gridData.length; i++) {
-            svg.append("path")
-                    .attr("d", gridPath(gridData[i]))
-                    .attr("stroke", "grey")
+        //candle部分
+        {
+            //      最高价、最低价
+            var candleLine = svg.selectAll("candleLine")
+                    .data(csvData)
+                    .enter()
+                    .append("line")
+                    .attr("x1", function (d, i) {
+                        return padding.left + xScale(tDate[i]) + xScale.rangeBand() / 2;
+                    })
+                    .attr("y1", function (d) {
+                        return height - padding.bottom - yScale(d[3]);  //low
+                    })
+                    .attr("x2", function (d, i) {
+                        return padding.left + xScale(tDate[i]) + xScale.rangeBand() / 2;
+                    })
+                    .attr("y2", function (d) {
+                        return height - padding.bottom - yScale(d[2]); //high
+                    })
+                    .attr("stroke", function (d) {
+                        return (d[1] - d[4] <= 0) ? "red" : "green"; //根据开盘价和收盘价改变线条颜色
+                    })
                     .attr("stroke-width", "1px")
                     .attr("fill", "none");
 
-        }
-
-    }
-
-    //candle部分
-    {
-        //      最高价、最低价
-        var candleLine = svg.selectAll("candleLine")
-                .data(csvData)
-                .enter()
-                .append("line")
-                .attr("x1", function (d, i) {
-                    return padding.left + xScale(tDate[i]) + xScale.rangeBand() / 2;
-                })
-                .attr("y1", function (d) {
-                    return height - padding.bottom - yScale(d[3]);  //low
-                })
-                .attr("x2", function (d, i) {
-                    return padding.left + xScale(tDate[i]) + xScale.rangeBand() / 2;
-                })
-                .attr("y2", function (d) {
-                    return height - padding.bottom - yScale(d[2]); //high
-                })
-                .attr("stroke", function (d) {
-                    return (d[1] - d[4] <= 0) ? "red" : "green"; //根据开盘价和收盘价改变线条颜色
-                })
-                .attr("stroke-width", "1px")
-                .attr("fill", "none");
-
-        //      开盘价、收盘价
-        var candleBody = svg.selectAll("candleBody")
-                .data(csvData)
-                .enter()
-                .append("rect")
-                .attr("stroke", function (d) {
-                    return (d[1] - d[4] <= 0) ? "red" : "green"
-                })
-                .attr("stroke-width","0.3px")
-                .attr("fill", function (d) {
-                    return (d[1] - d[4]) <= 0 ? "white" : "green"
-                })
-                .attr("x", function (d, i) {
-                    return padding.left + xScale(tDate[i]);
-                })
-                .attr("y", function (d) {
-                    return height - padding.bottom - yScale(Math.max(d[1], d[4]));
-                })
-                .attr("width", xScale.rangeBand())
-                .attr("height", function (d) {
+            //      开盘价、收盘价
+            var candleBody = svg.selectAll("candleBody")
+                    .data(csvData)
+                    .enter()
+                    .append("rect")
+                    .attr("stroke", function (d) {
+                        return (d[1] - d[4] <= 0) ? "red" : "green"
+                    })
+                    .attr("stroke-width", "0.3px")
+                    .attr("fill", function (d) {
+                        return (d[1] - d[4]) <= 0 ? "white" : "green"
+                    })
+                    .attr("x", function (d, i) {
+                        return padding.left + xScale(tDate[i]);
+                    })
+                    .attr("y", function (d) {
+                        return height - padding.bottom - yScale(Math.max(d[1], d[4]));
+                    })
+                    .attr("width", xScale.rangeBand())
+                    .attr("height", function (d) {
 //                return yScale(Math.abs(d[1] - d[4]));
-                    return Math.abs(yScale(d[1]) - yScale(d[4]));
-                })
-                .on("mouseover", function (d) {
-                    d3.select(this)
-                            .attr("fill", function (d) {
-                                return (d[1] - d[4]) <= 0 ? "red" : "white"
-                            });
-                    tooltip.html("date:" + d[0] + "<br/>"
-                            + "open:" + d[1] + "<br />"
-                            + "high:" + d[2] + "<br />"
-                            + "low:" + d[3] + "<br />"
-                            + "close:" + d[4] + "<br />"
-                            + "volume:" + d[5])
-                            .style("left", (d3.event.pageX + 20) + "px")
-                            .style("top", (d3.event.pageY + 20) + "px")
-                            .style("opacity", 0.6);
+                        return Math.abs(yScale(d[1]) - yScale(d[4]));
+                    })
+                    .on("mouseover", function (d) {
+                        d3.select(this)
+                                .attr("fill", function (d) {
+                                    return (d[1] - d[4]) <= 0 ? "red" : "white"
+                                });
+                        tooltip.html("date:" + d[0] + "<br/>"
+                                + "open:" + d[1] + "<br />"
+                                + "high:" + d[2] + "<br />"
+                                + "low:" + d[3] + "<br />"
+                                + "close:" + d[4] + "<br />"
+                                + "volume:" + d[5])
+                                .style("left", (d3.event.pageX + 20) + "px")
+                                .style("top", (d3.event.pageY + 20) + "px")
+                                .style("opacity", 0.6);
 
-                })
-                .on("mouseleave", function () {
-                    d3.select(this)
-                            .transition()
-                            .duration(200)
-                            .attr("fill", function (d) {
-                                return (d[1] - d[4]) <= 0 ? "white" : "green"
-                            });
-                    tooltip.style("opacity", 0.0)
-                            .style("left", "0px")
-                            .style("top", "0px");
-                })
-                .on("mouseenter", function () {
-                    tooltip.style("left", (d3.event.pageX + 20) + "px")
-                            .style("top", (d3.event.pageY + 20) + "px");
-                });
+                    })
+                    .on("mouseleave", function () {
+                        d3.select(this)
+                                .transition()
+                                .duration(200)
+                                .attr("fill", function (d) {
+                                    return (d[1] - d[4]) <= 0 ? "white" : "green"
+                                });
+                        tooltip.style("opacity", 0.0)
+                                .style("left", "0px")
+                                .style("top", "0px");
+                    })
+                    .on("mouseenter", function () {
+                        tooltip.style("left", (d3.event.pageX + 20) + "px")
+                                .style("top", (d3.event.pageY + 20) + "px");
+                    });
 
-    }
-
-    //volume部分
-    {
-
-        var volumeWidth = width;
-        var volumeHeight = 120;
-
-//        var volumePadding = {top: 20, right: 30, bottom: 20, left: 60};
-//
-        //定义volume数组
-        var volumeData = [];
-        //数组赋值
-        for (var i = 0; i < csvData.length; i++) {
-            volumeData.push(parseInt(csvData[i][5]));
         }
+
+        //volume部分
+        {
+
+            var volumeWidth = width;
+            var volumeHeight = height / 2;
+
 //
-//        //volume最大值
-//        var volumeMax = d3.max(volume);
+            //定义volume数组
+            var volumeData = [];
+            //数组赋值
+            for (var i = 0; i < csvData.length; i++) {
+                volumeData.push(parseInt(csvData[i][5]));
+            }
+
+            //添加svg元素
+            var volumeCell = cells[1];
+            var volumeSvg = d3.select(volumeCell)
+                    .append("svg")
+                    .attr("width", volumeWidth)
+                    .attr("height", volumeHeight);
+
+            plotVolume(volumeSvg, tDate, volumeData);
+        }
+
+        //交易标志及连线
+        {
 //
-//        //volume y轴比例尺
-//        var yVolumeScale = d3.scale.linear()
-//                .domain([0, volumeMax])
-//                .rangeRound([0, (volumeHeight - volumePadding.bottom - volumePadding.top)]);
-
-        //添加svg元素
-        var volumeSvg = d3.select("#volume")
-                .append("svg")
-                .attr("width", volumeWidth)
-                .attr("height", volumeHeight);
-
-        plotVolume(volumeSvg, tDate, volumeData);
-
-//        //往svg元素中添加rect元素
-//        var volumeRect = volumeSvg.selectAll("volumeRect")
-//                .data(volume)
-//                .enter()
-//                .append("rect")
-//                .attr("stroke", "steelblue")
-//                //                            .attr("fill", "white")
-//                //                            .attr("height", 0)
-//                //                            //过渡
-//                //                            .transition()
-//                //                            .duration(1500)
-//                .attr("fill", "url(#myLinearGradient1)")
-//                .attr("x", function (d, i) {
-//                    return volumePadding.left + xScale(tDate[i]);
-//                })
-//                .attr("y", function (d) {
-//                    return volumeHeight - volumePadding.bottom - yVolumeScale(d);
-//                })
-//                .attr("width", xScale.rangeBand())
-//                .attr("height", function (d) {
-//                    return yVolumeScale(d);
-//                })
-//                .on("mouseleave", function () {
-//                    d3.select(this).attr("fill", "url(#myLinearGradient1)");
-//                    d3.select(this).attr("stroke", "steelblue");
-//                })
-//                .on("mouseenter", function () {
-//                    d3.select(this).attr("fill", "orange");
-//                    d3.select(this).attr("stroke", "orange");
-//                });
-////                .on("mouseleave",function () {
-////                    d3.select(this).attr("fill","steelblue");
-////
-////                })
-////                .on("mouseenter",function () {
-////                    d3.select(this).attr("fill", "white");
-////
-////                });
-//
-//
-//        //yVolume轴坐标
-//        var yVolumeAxis = d3.svg.axis()
-//                .scale(yVolumeScale)
-//                .orient("right");
-//
-//        //翻转y坐标
-//        yVolumeScale.range([volumeHeight - volumePadding.bottom - volumePadding.top, 0]);
-//
-//        //在svg元素中添加g元素，并放置y坐标轴
-//        volumeSvg.append("g")
-//                .attr("class", "axis")
-//                .attr("transform", "translate(" + volumePadding.left + "," + volumePadding.top + ")")
-//                .call(yVolumeAxis);
+            //定义符号生成器
+            var symbol = d3.svg.symbol()
+                    .size("100");
 
 
-    }
-
-    //交易标志及连线
-    {
-//
-        //定义符号生成器
-        var symbol = d3.svg.symbol()
-                .size("100");
-
-
-        //买卖标志(圆)
+            //买卖标志(圆)
 //         var mark = svg.selectAll("mark")
 //         .data(tradeData)
 //         .enter()
@@ -418,7 +419,7 @@
 //         })
 //         .attr("r", 5);
 //
-        //买卖标志（菱形）
+            //买卖标志（菱形）
 //        var markTri = svg.selectAll("markTri")
 //                .data(tradeData)
 //                .enter()
@@ -440,198 +441,209 @@
 //                });
 
 
-        //声明用于存放交易连线的数组
-        //[[[买日期,买价格],[卖日期,卖价格]],[[买日期,买价格],[卖日期,卖价格]],[[买日期,买价格],[卖日期,卖价格]]...]
-        var lineArray = new Array();
+            //声明用于存放交易连线的数组
+            //[[[买日期,买价格],[卖日期,卖价格]],[[买日期,买价格],[卖日期,卖价格]],[[买日期,买价格],[卖日期,卖价格]]...]
+            var lineArray = new Array();
 
-        for (var x = 0; x < tradeArray.length; x++) {
-            lineArray[x] = new Array();
-            for (var y = 0; y < 2; y++) {
-                lineArray[x][y] = new Array();
-                for (var z = 0; z < 2; z++) {
-                    lineArray[x][y][z] = 0;
-                    lineArray[x][y][z] = 0;
+            for (var x = 0; x < tradeArray.length; x++) {
+                lineArray[x] = new Array();
+                for (var y = 0; y < 2; y++) {
+                    lineArray[x][y] = new Array();
+                    for (var z = 0; z < 2; z++) {
+                        lineArray[x][y][z] = 0;
+                        lineArray[x][y][z] = 0;
+                    }
                 }
             }
-        }
 
 
-        //将tradeArray数组转换成lineArray数组
+            //将tradeArray数组转换成lineArray数组
 
-        for (var i = 0; i < tradeArray.length; i++) {
-            lineArray[i][0][0] = padding.left + xScale(tradeArray[i].buyDate) + xScale.rangeBand() * 0.5;
-            lineArray[i][0][1] = height - padding.bottom - yScale(tradeArray[i].buyPrice);
-            lineArray[i][1][0] = padding.left + xScale(tradeArray[i].sellDate) + xScale.rangeBand() * 0.5;
-            lineArray[i][1][1] = height - padding.bottom - yScale(tradeArray[i].sellPrice);
-        }
+            for (var i = 0; i < tradeArray.length; i++) {
+                lineArray[i][0][0] = padding.left + xScale(tradeArray[i].buyDate) + xScale.rangeBand() * 0.5;
+                lineArray[i][0][1] = height - padding.bottom - yScale(tradeArray[i].buyPrice);
+                lineArray[i][1][0] = padding.left + xScale(tradeArray[i].sellDate) + xScale.rangeBand() * 0.5;
+                lineArray[i][1][1] = height - padding.bottom - yScale(tradeArray[i].sellPrice);
+            }
 
-        //交易连线路径生成器
-        var tradePath = d3.svg.line();
+            //交易连线路径生成器
+            var tradePath = d3.svg.line();
 
 //        console.log(lineArray);
 
-        var profit = [];
-        //绘制交易连线
-        for (var i = 0; i < lineArray.length; i++) {
-            svg.append("path")
-                    .attr("d", tradePath(lineArray[i]))
-                    .attr("stroke", function () {
-                        if (tradeArray[i].code.match(/long/)) {
-                            var temp = lineArray[i][0][1] - lineArray[i][1][1];
-                            profit.push(temp);
+            var profit = [];
+            //绘制交易连线
+            for (var i = 0; i < lineArray.length; i++) {
+                svg.append("path")
+                        .attr("d", tradePath(lineArray[i]))
+                        .attr("stroke", function () {
+                            if (tradeArray[i].code.match(/long/)) {
+                                var temp = lineArray[i][0][1] - lineArray[i][1][1];
+                                profit.push(temp);
 //                            console.log(temp);
-                            return lineArray[i][0][1] > lineArray[i][1][1] ? "red" : "green";
-                        } else if (tradeArray[i].code.match(/short/)) {
-                            var temp = lineArray[i][1][1] - lineArray[i][0][1];
-                            profit.push(temp);
+                                return lineArray[i][0][1] > lineArray[i][1][1] ? "red" : "green";
+                            } else if (tradeArray[i].code.match(/short/)) {
+                                var temp = lineArray[i][1][1] - lineArray[i][0][1];
+                                profit.push(temp);
 //                            console.log(lineArray[i][1][1] - lineArray[i][0][1]);
-                            return lineArray[i][0][1] > lineArray[i][1][1] ? "green" : "red";
-                        }
-                    })
-                    .attr("stroke-width", "2px")
-                    .attr("fill", "none");
-        }
-
-        console.log(profit);
-    }
-
-    //鼠标随动x,y轴坐标显示
-    {
-
-        //控制x轴输出密度的数组
-        var indexNeed = new Array();
-        var density = 40;
-        for (var k = 0; k < tDate.length; k++) {
-            if (k % density === 1) {
-                indexNeed[k] = k;
+                                return lineArray[i][0][1] > lineArray[i][1][1] ? "green" : "red";
+                            }
+                        })
+                        .attr("stroke-width", "2px")
+                        .attr("fill", "none");
             }
         }
 
-        //清空数组中的空值
-        for (var i = 0; i < indexNeed.length; i++) {
-            if (indexNeed[i] == "" || typeof(indexNeed[i]) == "undefined") {
-                indexNeed.splice(i, 1);
-                i = i - 1;
+        //鼠标随动x,y轴坐标显示
+        {
 
+            //控制x轴输出密度的数组
+            var indexNeed = new Array();
+            var density = 40;
+            for (var k = 0; k < tDate.length; k++) {
+                if (k % density === 1) {
+                    indexNeed[k] = k;
+                }
             }
-        }
-        //x轴坐标
-        var xAxis = d3.svg.axis()
-                .scale(xScale)
-                .tickValues(d3.permute(tDate, indexNeed))//tickValues直接输出坐标轴标志，permute函数根据indexNeed数组来决定tData数组的输出
-                .orient("bottom");
 
+            //清空数组中的空值
+            for (var i = 0; i < indexNeed.length; i++) {
+                if (indexNeed[i] == "" || typeof(indexNeed[i]) == "undefined") {
+                    indexNeed.splice(i, 1);
+                    i = i - 1;
+
+                }
+            }
+            //x轴坐标
+            var xAxis = d3.svg.axis()
+                    .scale(xScale)
+                    .tickValues(d3.permute(tDate, indexNeed))//tickValues直接输出坐标轴标志，permute函数根据indexNeed数组来决定tData数组的输出
+                    .orient("bottom");
+
+
+            //翻转y轴定义域
+            yScale.range([height - padding.top - padding.bottom, 0]);
+
+            //y轴坐标
+            var yAxis = d3.svg.axis()
+                    .scale(yScale)
+                    .orient("left");
+
+            //在svg元素中添加g元素，并放置x坐标轴
+            svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(" + padding.left + "," + (height - padding.bottom) + ")")
+                    .call(xAxis);
+
+            //在svg元素中添加g元素，并放置y坐标轴
+            svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(" + padding.left + "," + padding.top + ")")
+                    .call(yAxis);
+        }
+
+        //收盘价线
+        {
+            //    var closeData = new Array();
+            //
+            //    //收盘价数组初始化
+            //    for (var x = 0; x < csvData.length; x++) {
+            //        closeData[x] = new Array();
+            //        for (var y = 0; y < 2; y++) {
+            //            closeData[x][y] = 0;
+            //        }
+            //    }
+            //    //收盘价数组赋值
+            //    for (var i = 0; i < csvData.length; i++) {
+            //        closeData[i][0] = padding.left + xScale.rangeBand() * 0.5 + xScale(tDate[i]);
+            //        closeData[i][1] = padding.bottom + yScale(csvData[i][4]);
+            //    }
+            //
+            //    //收盘价路径生成器
+            //    var closePath = d3.svg.line()
+            //            .interpolate("basis");
+            //
+            //    //在svg中添加收盘价路径
+            //    svg.append("path")
+            //            .attr("d", closePath(closeData))
+            //            .attr("stroke", "orange")
+            //            .attr("stroke-width", "2px")
+            //            .attr("fill", "none");
+        }
+
+        //N日价格通道
+        {
+            nDaysChannel(svg, csvData, tDate, 20, xScale, yScale, "red", "green", "3px", padding);
+            nDaysChannel(svg, csvData, tDate, 10, xScale, yScale, "orange", "blue", "1px", padding);
+        }
+
+
+        //收盘价均线
+        {
+            nDaysAveragePath(svg, csvData, tDate, 5, xScale, yScale, "green", padding);
+            nDaysAveragePath(svg, csvData, tDate, 20, xScale, yScale, "red", padding);
+            nDaysAveragePath(svg, csvData, tDate, 60, xScale, yScale, "orange", padding);
+        }
+
+
+        //利润曲线
+        var pDate = [];
+        var pData = [];
+        for (var i = 0; i < profitData.length; i++) {
+            pDate.push(profitData[i][0]);
+            pData.push(profitData[i][1]);
+        }
+
+        var pDataMax = d3.max(pData);
+
+        var yScaleProfit = d3.scale.linear()
+                .domain([-0.5 * pDataMax, pDataMax])
+                .rangeRound([height - padding.top - padding.bottom, 0]);
+
+
+        for (var i = 0; i < pData.length; i++) {
+            pDate[i] = padding.left + xScale.rangeBand() * 0.5 + xScale(pDate[i]);
+            pData[i] = padding.bottom + yScaleProfit(pData[i]);
+        }
+
+        var pDataForDraw = d3.zip(pDate, pData);
+
+        //利润路径生成器
+        var pDataPathGen = d3.svg.line();
+
+        //在svg中添加利润路径
+        svg.append("path")
+                .attr("d", pDataPathGen(pDataForDraw))
+                .attr("stroke", "black")
+                .attr("stroke-width", "1px")
+                //            .attr("stroke-dasharray","1")//线型
+                .attr("fill", "none");
+
+//    var yAxisProfit = d3.svg.axis();
 
         //翻转y轴定义域
         yScale.range([height - padding.top - padding.bottom, 0]);
 
         //y轴坐标
-        var yAxis = d3.svg.axis()
-                .scale(yScale)
-                .orient("left");
-
-        //在svg元素中添加g元素，并放置x坐标轴
-        svg.append("g")
-                .attr("class", "axis")
-                .attr("transform", "translate(" + padding.left + "," + (height - padding.bottom) + ")")
-                .call(xAxis);
+        var yAxisProfit = d3.svg.axis()
+                .scale(yScaleProfit)
+                .orient("right");
 
         //在svg元素中添加g元素，并放置y坐标轴
         svg.append("g")
                 .attr("class", "axis")
-                .attr("transform", "translate(" + padding.left + "," + padding.top + ")")
-                .call(yAxis);
-    }
-
-    //收盘价线
-    {
-        //    var closeData = new Array();
-        //
-        //    //收盘价数组初始化
-        //    for (var x = 0; x < csvData.length; x++) {
-        //        closeData[x] = new Array();
-        //        for (var y = 0; y < 2; y++) {
-        //            closeData[x][y] = 0;
-        //        }
-        //    }
-        //    //收盘价数组赋值
-        //    for (var i = 0; i < csvData.length; i++) {
-        //        closeData[i][0] = padding.left + xScale.rangeBand() * 0.5 + xScale(tDate[i]);
-        //        closeData[i][1] = padding.bottom + yScale(csvData[i][4]);
-        //    }
-        //
-        //    //收盘价路径生成器
-        //    var closePath = d3.svg.line()
-        //            .interpolate("basis");
-        //
-        //    //在svg中添加收盘价路径
-        //    svg.append("path")
-        //            .attr("d", closePath(closeData))
-        //            .attr("stroke", "orange")
-        //            .attr("stroke-width", "2px")
-        //            .attr("fill", "none");
-    }
-
-    //N日价格通道
-    {
-        nDaysChannel(csvData, 20, xScale, yScale, "red", "green", "3px");
-        nDaysChannel(csvData, 10, xScale, yScale, "orange", "blue","1px");
-    }
+                .attr("transform", "translate(" + (width - padding.right) + "," + padding.top + ")")
+                .call(yAxisProfit);
 
 
-    //收盘价均线
-    {
-        nDaysAveragePath(csvData, 5, "green");
-        nDaysAveragePath(csvData, 20, "red");
-        nDaysAveragePath(csvData, 60, "orange");
-    }
-
-
-    //利润曲线
-    //    console.log(profitData);
-    var pDate = [];
-    var pData = [];
-    for (var i = 0; i < profitData.length; i++) {
-        pDate.push(profitData[i][0]);
-        pData.push(profitData[i][1]);
-    }
-
-    var pDataMax = d3.max(pData);
-
-    var yScaleProfit = d3.scale.linear()
-            .domain([-0.5 * pDataMax, pDataMax])
-            .rangeRound([height - padding.top - padding.bottom, 0]);
-
-
-    for (var i = 0; i < pData.length; i++) {
-        pDate[i] = padding.left + xScale.rangeBand() * 0.5 + xScale(pDate[i]);
-        pData[i] = padding.bottom + yScaleProfit(pData[i]);
-    }
-    //    console.log(pDate);
-    //    console.log(pData);
-
-    var pDataForDraw = d3.zip(pDate, pData);
-
-    //利润路径生成器
-    var pDataPathGen = d3.svg.line();
-
-    //在svg中添加利润路径
-    svg.append("path")
-            .attr("d", pDataPathGen(pDataForDraw))
-            .attr("stroke", "black")
-            .attr("stroke-width", "1px")
-            //            .attr("stroke-dasharray","1")//线型
-            .attr("fill", "none");
-
-
-    function mousemove() {
-        var mouseX = d3.mouse(this)[0];
-        var mouseY = d3.mouse(this)[1];
+        function mousemove() {
+            var mouseX = d3.mouse(this)[0];
+            var mouseY = d3.mouse(this)[1];
 //        var x0 = xScale("2017/1/18");
 //        var y0 = Math.round(yScale.invert(mouseY));
-        yAxisPosition.html(Math.round(yScale.invert(mouseY)))
-                .style("left", padding.left + "px")
-                .style("top", (d3.event.pageY - 8 ) + "px");
+            yAxisPosition.html(Math.round(yScale.invert(mouseY)))
+                    .style("left", padding.left + "px")
+                    .style("top", (d3.event.pageY - 8 ) + "px");
 
 //        hLine.attr("x1", mouseX)
 //                .attr("y1", mouseY)
@@ -648,22 +660,79 @@
 //                .style("stroke-width","1px");
 
 
-    }
+        }
 
-    function mouseover() {
-        var mouseY = d3.mouse(this)[1] - padding.top;
-        yAxisPosition.html(Math.round(yScale.invert(mouseY)))
-                .style("left", padding.left + "px")
-                .style("top", (d3.event.pageY - 8 ) + "px")
-                .style("opacity", 0.8);
+        function mouseover() {
+            var mouseY = d3.mouse(this)[1] - padding.top;
+            yAxisPosition.html(Math.round(yScale.invert(mouseY)))
+                    .style("left", padding.left + "px")
+                    .style("top", (d3.event.pageY - 8 ) + "px")
+                    .style("opacity", 0.8);
 
 //        focusLine.style("opacity", 1.0);
+        }
+
+        function mouseout() {
+            yAxisPosition.style("opacity", 0.0);
+//        focusLine.style("opacity", 0.0);
+        }
+
+
+        //交易数据表格
+
+        var tBody = document.getElementsByTagName("tbody")[0];
+        console.log(tBody);
+        for(var i = 0; i<tradeData.length; i++){
+            var dataRow = getDataRow(i,tradeData[i]);
+            tBody.appendChild(dataRow);
+        }
+
+        function getDataRow(i,data) {
+            var row = document.createElement("tr");
+
+            var idCell = document.createElement("td");
+            idCell.innerHTML = i+1;
+            row.appendChild(idCell);
+
+            var amountCell = document.createElement("td");
+            amountCell.innerHTML=data.amount;
+            row.appendChild(amountCell);
+
+            var codeCell = document.createElement("td");
+            codeCell.innerHTML=data.code;
+            row.appendChild(codeCell);
+
+            var directionCell = document.createElement("td");
+            directionCell.innerHTML=data.direction;
+            row.appendChild(directionCell);
+
+            var preCodeCell = document.createElement("td");
+            preCodeCell.innerHTML=data.preCode;
+            row.appendChild(preCodeCell);
+
+            var priceCell = document.createElement("td");
+            priceCell.innerHTML=data.price;
+            row.appendChild(priceCell);
+
+            var tradeDateCell = document.createElement("td");
+            tradeDateCell.innerHTML=data.tradeDate;
+            row.appendChild(tradeDateCell);
+
+            var profitCell = document.createElement("td");
+            profitCell.innerHTML=0;
+            row.appendChild(profitCell);
+
+            var profitPercCell = document.createElement("td");
+            profitPercCell.innerHTML=0;
+            row.appendChild(profitPercCell);
+
+            return row;
+        }
     }
 
-    function mouseout() {
-        yAxisPosition.style("opacity", 0.0);
-//        focusLine.style("opacity", 0.0);
-    }
+    cellPlot("plotArea", "cu.csv");
+
+
 
 
 </script>
