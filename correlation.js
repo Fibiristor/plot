@@ -42,7 +42,6 @@ function STD(x) {
     }
     var averageZ = sumZ / x.length;
     var STD = Math.sqrt(averageZ);
-    // console.log(STD);
     return STD;
 }
 
