@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../styles/TestSystemVer2.css" type="text/css"/>
+</head>
+<body>
+<div class="main">
+    <div class="total">
+        <div class="totalParamSet">
+            <ul>
+                <li><label>策略:</label>
+                    <select id="selectOption" onchange="selectOnchange()">
+                        <option value="cat1">唐齐安通道</option>
+                        <option value="cat2">均 线</option>
+                    </select>
+                </li>
+                <li>
+                    <label>策略参数:</label>
+                </li>
+                <li>
+                    <table cellpadding="0px" cellspacing="0px" role="none">
+                        <tr>
+                            <td width="30px"><span>突破:</span><input type="text" style="width: 45px;"></td>
+                            <td width="30px"><span>平仓:</span><input type="text" style="width: 45px;"></td>
+                        </tr>
+                        <tr>
+                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
+                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
+                        </tr>
+                        <tr>
+                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
+                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
+                        </tr>
+                        <tr>
+                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
+                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
+                        </tr>
+                    </table>
+                </li>
+                <li>
+                    <label>交易时间:</label>
+                </li>
+                <li>
+                    <label>开始:</label><input type="date">
+                </li>
+                <li>
+                    <label>结束:</label><input type="date">
+                </li>
+                <li><label>资金:</label>
+                    <input type="text">
+                </li>
+                <li>
+                    <label>合约:</label>
+                </li>
+                <li>
+                    <div style="width: 180px; height: 90px">
+                        <div style="float: left; width: 70px; height: 90px;">
+                            <select style="width: 70px" size="5" multiple="multiple">
+                                <option value="1">螺纹钢</option>
+                                <option value="1">沪铜</option>
+                                <option value="1">PTA</option>
+                                <option value="1">橡胶</option>
+                                <option value="1">沪铝</option>
+                                <option value="1">棕榈油</option>
+                            </select>
+                        </div>
+                        <div style="float: left; align: center">
+                            <button style="display: block">==></button>
+                            <button style="display: block">=></button>
+                            <button style="display: block"><==</button>
+                            <button style="display: block"><=</button>
+                        </div>
+                        <div style="float: left; width: 70px;height: 90px">
+                            <select style="width: 70px" size="5" multiple="multiple">
+                                <option value="1">螺纹钢</option>
+                                <option value="1">沪铜</option>
+                                <option value="1">PTA</option>
+                                <option value="1">橡胶</option>
+                                <option value="1">沪铝</option>
+                                <option value="1">棕榈油</option>
+                            </select>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="totalProfit">totalProfit</div>
+    </div>
+    <div class="single">
+        <div class="singleParamSet">singleParamSet</div>
+        <div class="singleProfit">singleProfit</div>
+    </div>
+</div>
+<script type="text/javascript">
+    function hello(e) {
+        alert(e.currentTarget)
+    }
+
+    function selectOnchange() {
+        var selected = document.getElementById("selectOption");
+        console.info(selected.options[selected.selectedIndex].value);
+    }
+</script>
+</body>
+</html>
