@@ -1,0 +1,35 @@
+*{
+    margin:0px;
+    padding:0px;
+}
+
+#single{
+    width:1600px;
+    height: 800px;
+}
+#singleParamSet{
+    width:200px;
+    height: 800px;
+    float: left;
+}
+#singleProfit{
+    width:1400px;
+    height:800px;
+    float: left;
+    font-size: 8px;
+}
+
+#singleCandle{
+    width: 1400px;
+    height:600px;
+}
+#singleVolume{
+    width:1400px;
+    height:200px;
+}
+.axis path,
+.axis line{
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
