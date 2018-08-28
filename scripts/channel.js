@@ -4,7 +4,7 @@
 
 //N日价格通道
 
-function nDaysChannel(data, days, xScale, yScale, topColor, bottomColor,lineWidth) {
+function nDaysChannel(svg, data, tDate,days, xScale, yScale, topColor, bottomColor,lineWidth,padding) {
     //原始数据长度
     var lengthData = data.length;
 
@@ -75,7 +75,7 @@ function nDaysChannel(data, days, xScale, yScale, topColor, bottomColor,lineWidt
 
     //求N日最小值并放入数组minValues
     for (var i = 0; i < lengthData; i++) {
-        minValue = csvData[i][3];
+        minValue = data[i][3];
         //如果日期数量小于N
         if (i <= days) {
             for (var j = 0; j < i; j++) {

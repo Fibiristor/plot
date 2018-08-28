@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample Page</title>
+</head>
+<body>
+<p id="p1">
+    Hello World!
+</p>
+<p id="p2">
+    How are you!
+</p>
+<p id="p3">
+    How dou you do!
+</p>
+</body>
+<script>
+    var element1 = document.getElementsByTagName("body")[0];
+    var elementP = document.createElement("p");
+    elementP.id = "p4";
+    elementP.innerHTML = "It's me!";
+    element1.appendChild(elementP);
+
+</script>
+</html>

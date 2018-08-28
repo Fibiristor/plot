@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LinearScale</title>
+    <link rel="stylesheet" href="../styles/LinearScale.css" type="text/css"/>
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3-v5.js" charset="utf-8"></script><!--d3绘图库-->
+    <!--<script src="https://d3js.org/d3.v5.min.js"></script>-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <!--<script src="../scripts/plotUtil.js" charset="UTF-8"></script>&lt;!&ndash;绘图库&ndash;&gt;-->
+    <!--<script src="../scripts/nDaysChanelStrategy.js" charset="utf-8"></script>&lt;!&ndash;策略计算库&ndash;&gt;-->
+    <!--<script src="../scripts/plotTradeLine.js" charset="UTF-8"></script>&lt;!&ndash;绘制交易线&ndash;&gt;-->
+    <!--<script src="../scripts/GetSimulateData.js" charset="utf-8"></script>&lt;!&ndash;获取模拟数据&ndash;&gt;-->
+    <!--<script src="../scripts/average.js" charset="utf-8"></script>&lt;!&ndash;均线&ndash;&gt;-->
+    <!--<script src="../scripts/Grids.js" charset="UTF-8"></script>&lt;!&ndash;网格线&ndash;&gt;-->
+</head>
+<body>
+<span id="dateValue" style="position: absolute;"></span>
+<script type="text/javascript">
+    const padding = {top: 30, right: 70, bottom: 30, left: 70};
+    /*获得宽和高*/
+    const height = 600;
+    const width = 1500;
+    var strokeWidth = 1;
+    var strokeColor = "red";
+    var upColor = "#ff4a68";
+    var downColor = "#238853";
+
+
+    var dateFormat = d3.timeFormat("%Y/%m/%d");
+
+    /*在body中添加SVG元素*/
+    var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+
+    /*文件名称*/
+    var csvFile = "../data/candleTest.csv";
+    /*原始数据*/
+    var csvData = getDataFromCSV(csvFile, "text", false);
+
+    /*日期*/
+    var date = [];
+    /*开盘价*/
+    var open = [];
+    /*最高价*/
+    var high = [];
+    /*最低价*/
+    var low = [];
+    /*收盘价*/
+    var close = [];
+
+    var parseTime = d3.timeParse("%Y/%m/%d");
+
+    var n = csvData.length;
+
+    for (var i = 0; i < n; i++) {
+        date[i] = parseTime(csvData[i][0]);
+        open[i] = csvData[i][1]
+        high[i] = csvData[i][2]
+        low[i] = csvData[i][3]
+        close[i] = csvData[i][4];
+    }
+
+    plotLine(date, close, padding);
+//    plotCandle(date, csvData, padding);
+
+    function plotLine(date, close, padding) {
+
+        /*x轴比例尺*/
+        var xScale = d3.scaleTime()
+                .domain(d3.extent(date))
+                .range([0, width - padding.left - padding.right]);
+
+
+        /*y轴比例尺*/
+        var yScale = d3.scaleLinear()
+                .domain(d3.extent(close))
+                .range([height - padding.top - padding.bottom, 0]);
+
+        /*合并数据*/
+        var dataCombine = d3.zip(date, close);
+
+        /*线段生成器*/
+        var linePath = d3.line()
+                .x(function (d) {
+                    return xScale(d[0]);
+
+                })
+                .y(function (d) {
+                    return yScale(d[1]);
+                });
+
+        svg.selectAll("path")
+                .data(dataCombine)
+                .enter()
+                .append("path")
+                .attr("d", linePath(dataCombine))
+                .attr("transform", "translate(" + padding.left + "," + padding.top + ")")
+                .attr("fill", "none")
+                .attr("stroke-width", strokeWidth)
+                .attr("stroke", strokeColor);
+
+
+        /*x轴坐标*/
+        var xAxis = d3.axisBottom(xScale)
+//                .tickValues(date)
+                .tickFormat(function (d) {
+                    return dateFormat(d);
+                });
+
+        /*y轴左侧坐标*/
+        var yAxisL = d3.axisLeft(yScale);
+
+        /*放置x轴坐标*/
+        svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + padding.left + "," + (height - padding.bottom) + ")")
+                .call(xAxis);
+
+        /*放置y轴坐标*/
+        svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + padding.left + "," + padding.top + ")")
+                .call(yAxisL);
+
+
+        /*响应鼠标移动事件的图层*/
+        svg.append("rect")
+                .attr("class", "overlay")
+                .attr("x", padding.left)
+                .attr("y", padding.top)
+                .attr("width", width - padding.left - padding.right)
+                .attr("height", height - padding.top - padding.bottom)
+                .on("mousemove", function () {
+                    var mouseX = d3.mouse(this)[0] - padding.left;
+                    var mouseY = d3.mouse(this)[1] - padding.top;
+
+                    document.getElementById("dateValue").innerText = dateFormat(xScale.invert(mouseX)) + "---" + Math.round(yScale.invert(mouseY));
+                });
+    }
+
+    function plotCandle(date, csvData, padding) {
+
+        var rectStep = width / csvData.length;
+        var rectWidth = 0.4 * rectStep;
+
+        /*最高价*/
+        var maxValue = d3.max(high);
+        /*最低价*/
+        var minValue = d3.min(low);
+
+
+        /*x轴比例尺*/
+        var xScale = d3.scaleTime()
+                .domain(d3.extent(csvData, function (d) {
+                    return parseTime(d[0]);
+                }))
+                .range([0, width - padding.left - padding.right]);
+
+        /*y轴比例尺*/
+        var yScale = d3.scaleLinear()
+                .domain([minValue, maxValue])
+                .range([height - padding.top - padding.bottom, 0]);
+
+        /*最高价、最低价*/
+        var candleLine = svg.selectAll("candleLine")
+                .data(csvData)
+                .enter()
+                .append("line")
+                .attr("x1", function (d, i) {
+                    return padding.left + rectWidth / 2 + xScale(date[i]);
+                })
+                .attr("y1", function (d) {
+                    return padding.bottom + yScale(d[3]);
+                })
+                .attr("x2", function (d, i) {
+                    return padding.left + rectWidth / 2 + xScale(date[i]);
+                })
+                .attr("y2", function (d) {
+                    return padding.bottom + yScale(d[2]);
+                })
+                .attr("stroke", function (d) {
+                    return (d[1] - d[4]) <= 0 ? upColor : downColor;
+                })
+                .attr("stroke-width", strokeWidth)
+                .attr("fill", "none");
+
+        /*开盘价、收盘价*/
+        var candleBody = svg.selectAll("candleBody")
+                .data(csvData)
+                .enter()
+                .append("rect")
+                .attr("x", function (d, i) {
+                    return padding.left + xScale(date[i])
+                })
+                .attr("y", function (d) {
+                    return padding.bottom + yScale(Math.max(d[1], d[4]));
+                })
+                .attr("width", rectWidth)
+                .attr("height", function (d) {
+                    return Math.abs(yScale(d[1]) - yScale(d[4]));
+                })
+                .attr("stroke", function (d) {
+                    return (d[1] - d[4]) <= 0 ? upColor : downColor;
+                })
+                .attr("stroke-width", strokeWidth)
+                .attr("fill", function (d) {
+                    return (d[1] - d[4]) <= 0 ? upColor : downColor;
+                });
+
+        /*x轴坐标*/
+        var xAxis = d3.axisBottom(xScale)
+                .tickFormat(function (d) {
+                    return dateFormat(d);
+                });
+
+        /*y轴左侧坐标*/
+        var yAxisL = d3.axisLeft(yScale);
+        /*y轴右侧坐标*/
+        var yAxisR = d3.axisRight(yScale);
+
+
+        /*放置x轴坐标*/
+        svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + padding.left + "," + (height - padding.bottom) + ")")
+                .call(xAxis);
+
+        /*放置y轴坐标*/
+        svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + padding.left + "," + (padding.bottom) + ")")
+                .call(yAxisL);
+
+        /*放置y轴坐标*/
+        svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + (width - padding.right) + "," + padding.bottom + ")")
+                .call(yAxisR);
+
+        /*响应鼠标移动事件的图层*/
+        svg.append("rect")
+                .attr("class", "overlay")
+                .attr("x", padding.left)
+                .attr("y", padding.top)
+                .attr("width", width - padding.left - padding.right)
+                .attr("height", height - padding.top - padding.bottom)
+                .on("mousemove", function () {
+                    var mouseX = d3.mouse(this)[0] - padding.left;
+                    var mouseY = d3.mouse(this)[1] - padding.top;
+                    document.getElementById("dateValue").innerText = dateFormat(xScale.invert(mouseX)) + "---" + Math.round(yScale.invert(mouseY));
+                });
+    }
+
+</script>
+
+</body>
+</html>

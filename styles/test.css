@@ -1,0 +1,32 @@
+* {
+    margin: auto;
+    padding:0;
+}
+
+.axis path,
+.axis line{
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+
+#mainArea{
+    width:1000px;
+    height: 420px;
+    border: 1px solid #8c8c8c;
+}
+#testDiv{
+    width: 1000px;
+    height:400px;
+    font-size:12px;
+}
+#desc{
+    width: 970px;
+    height:20px;
+    font-size:12px;
+    padding-left: 30px;
+}
+.focusLine{
+    line-height: 0.1rem;
+}

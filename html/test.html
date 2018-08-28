@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../styles/test.css">
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图库-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="UTF-8"></script><!--策略库-->
+</head>
+<body>
+<div id="mainArea">
+    <div id="desc"><span id="desc_position">x:0 y:0</span></div>
+    <div id="testDiv"></div>
+</div>
+<script>
+
+    /*数据文件*/
+    var csvFile = "../data/candle.csv";
+    /*测试数据*/
+    var dataForTest = getDataFromCSV(csvFile, "text", false);
+    /*测试容器*/
+    var divForTest = document.getElementById("testDiv");
+
+    /*画k线*/
+    plotCandle("testDiv", dataForTest);
+
+    /*缩放步长*/
+    var step = 20;
+    /*数组偏移值*/
+    var shiftNumber = 0;
+    /*最少显示数量*/
+    var minNumber = 20;
+    /*前一次偏移的索引值*/
+    var previousIndex = 0;
+
+    /*滚轮事件处理函数-实现放大缩小功能*/
+    var testFunc = function () {
+
+        /*阻止默认行为*/
+        event.preventDefault();
+
+        /*鼠标滚轮向上滚动，偏移值增加，可显示数据变少，达到放大功能*/
+        if (event.wheelDelta > 0) {
+            shiftNumber = shiftNumber + step > dataForTest.length - minNumber ? dataForTest.length - minNumber : shiftNumber + step;
+        } else { /*鼠标滚轮向下滚动，偏移值减少，可显示数据增多，达到缩小功能*/
+            shiftNumber = shiftNumber - step <= minNumber ? minNumber : shiftNumber - step;
+        }
+        /*只有当偏移值变化时才重绘*/
+        if (previousIndex != shiftNumber) {
+            /*重绘K线图*/
+            plotCandle("testDiv", dataForTest, shiftNumber);
+        }
+        /*记录本次的偏移值*/
+        previousIndex = shiftNumber;
+    };
+
+    /*注册事件监听器*/
+    divForTest.addEventListener("mousewheel", function () {
+        testFunc();
+    }, false);
+
+
+</script>
+</body>
+</html>

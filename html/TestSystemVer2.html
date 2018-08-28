@@ -4,104 +4,218 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link rel="stylesheet" href="../styles/TestSystemVer2.css" type="text/css"/>
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图库-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="utf-8"></script><!--策略计算库-->
+    <script src="../scripts/plotTradeLine.js" charset="UTF-8"></script><!--绘制交易线-->
+    <script src="../scripts/GetSimulateData.js" charset="utf-8"></script><!--获取模拟数据-->
 </head>
 <body>
 <div class="main">
     <div class="total">
         <div class="totalParamSet">
-            <ul>
-                <li><label>策略:</label>
-                    <select id="selectOption" onchange="selectOnchange()">
-                        <option value="cat1">唐齐安通道</option>
-                        <option value="cat2">均 线</option>
-                    </select>
-                </li>
-                <li>
-                    <label>策略参数:</label>
-                </li>
-                <li>
-                    <table cellpadding="0px" cellspacing="0px" role="none">
-                        <tr>
-                            <td width="30px"><span>突破:</span><input type="text" style="width: 45px;"></td>
-                            <td width="30px"><span>平仓:</span><input type="text" style="width: 45px;"></td>
-                        </tr>
-                        <tr>
-                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
-                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
-                        </tr>
-                        <tr>
-                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
-                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
-                        </tr>
-                        <tr>
-                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
-                            <td width="30px"><span>hello</span><input type="text" style="width: 45px;"></td>
-                        </tr>
-                    </table>
-                </li>
-                <li>
-                    <label>交易时间:</label>
-                </li>
-                <li>
-                    <label>开始:</label><input type="date">
-                </li>
-                <li>
-                    <label>结束:</label><input type="date">
-                </li>
-                <li><label>资金:</label>
-                    <input type="text">
-                </li>
-                <li>
-                    <label>合约:</label>
-                </li>
-                <li>
-                    <div style="width: 180px; height: 90px">
-                        <div style="float: left; width: 70px; height: 90px;">
-                            <select style="width: 70px" size="5" multiple="multiple">
-                                <option value="1">螺纹钢</option>
-                                <option value="1">沪铜</option>
-                                <option value="1">PTA</option>
-                                <option value="1">橡胶</option>
-                                <option value="1">沪铝</option>
-                                <option value="1">棕榈油</option>
-                            </select>
+            <form method="post" action="#" name="totalParaSubmit">
+                <ul>
+                    <li><label>策略名称:</label>
+                        <select id="selectOption" onchange="selectOnchange()">
+                            <option value="cat1">唐齐安通道</option>
+                            <option value="cat2">均&nbsp;线</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label>策略参数:</label>
+                    </li>
+                    <li>
+                        <table cellpadding="0px" cellspacing="0px" role="none">
+                            <tr>
+                                <td width="30px"><span>突破:</span><input id="tp" type="text" style="width: 45px;"
+                                                                        onchange="getTP()" name="tp"></td>
+                                <td width="30px"><span>平仓:</span><input id="pc" type="text" style="width: 45px;"
+                                                                        name="pc"
+                                ></td>
+                            </tr>
+                        </table>
+                    </li>
+                    <li>
+                        <label>交易时间:</label>
+                    </li>
+                    <li>
+                        <label>开始:</label><input type="date">
+                    </li>
+                    <li>
+                        <label>结束:</label><input type="date">
+                    </li>
+                    <li><label>资金:</label>
+                        <input type="text">
+                    </li>
+                    <li>
+                        <label>合约:</label>
+                    </li>
+                    <li>
+                        <div style="width: 180px; height: 90px">
+                            <div style="float: left; width: 70px; height: 90px;">
+                                <select style="width: 70px" size="5" multiple="multiple">
+                                    <option value="1">螺纹钢</option>
+                                    <option value="1">沪铜</option>
+                                    <option value="1">PTA</option>
+                                    <option value="1">橡胶</option>
+                                    <option value="1">沪铝</option>
+                                    <option value="1">棕榈油</option>
+                                </select>
+                            </div>
+                            <div style="float: left; align: center">
+                                <button style="display: block">==></button>
+                                <button style="display: block">=></button>
+                                <button style="display: block"><==</button>
+                                <button style="display: block"><=</button>
+                            </div>
+                            <div style="float: left; width: 70px;height: 90px">
+                                <select id="selectedOptions" style="width: 70px" size="5" multiple="multiple">
+                                    <option value="1">螺纹钢</option>
+                                    <option value="1">沪铜</option>
+                                    <option value="1">PTA</option>
+                                    <option value="1">橡胶</option>
+                                    <option value="1">沪铝</option>
+                                    <option value="1">棕榈油</option>
+                                </select>
+                            </div>
                         </div>
-                        <div style="float: left; align: center">
-                            <button style="display: block">==></button>
-                            <button style="display: block">=></button>
-                            <button style="display: block"><==</button>
-                            <button style="display: block"><=</button>
-                        </div>
-                        <div style="float: left; width: 70px;height: 90px">
-                            <select style="width: 70px" size="5" multiple="multiple">
-                                <option value="1">螺纹钢</option>
-                                <option value="1">沪铜</option>
-                                <option value="1">PTA</option>
-                                <option value="1">橡胶</option>
-                                <option value="1">沪铝</option>
-                                <option value="1">棕榈油</option>
-                            </select>
-                        </div>
-                    </div>
-                </li>
-            </ul>
+                    </li>
+                </ul>
+                <input type="submit" value="submit" onclick="showBack()">
+            </form>
         </div>
-        <div class="totalProfit">totalProfit</div>
+        <div class="totalProfit" id="totalProfit"></div>
     </div>
     <div class="single">
-        <div class="singleParamSet">singleParamSet</div>
-        <div class="singleProfit">singleProfit</div>
+        <div class="singleParamSet">
+            <input type="checkbox">K线</input>
+            <input type="checkbox">均&nbsp;线</input>
+            <input type="checkbox" onchange="toggleProfitPath()">通道线</input>
+            <input type="checkbox">成交量</input>
+        </div>
+        <div class="singleProfit" id="singleProfit">
+            <div id="singleCandle"></div>
+            <div id="singleVolume"></div>
+        </div>
     </div>
 </div>
 <script type="text/javascript">
-    function hello(e) {
-        alert(e.currentTarget)
+    //    function showBack() {
+    //        var tpValue = document.getElementById("tp").value;
+    //        console.info(tpValue);
+    //        document.getElementById("tp").value = tpValue;
+    //    }
+    //
+    //    function selectOnchange() {
+    //        var selected = document.getElementById("selectOption");
+    //        console.info(selected.options[selected.selectedIndex].value);
+    //    }
+    //    function getTP() {
+    //        var tp = document.getElementById("tp");
+    //        console.info(typeof( parseInt(tp.value)));
+    //    }
+    window.onload = function () {
+
+        /*交易品种数据*/
+//        var csvData = getDataFromCSV("../data/candle.csv", 'text', false);
+
+        var sampleFile = "../data/candle.csv";
+        var lengthOfSimulateData = 1000;
+        var csvData = getSimulateData(sampleFile, lengthOfSimulateData);
+
+        var divName = document.getElementById("singleCandle");
+
+        /*日期数据*/
+        var tDate = [];
+        for (var i = 0; i < csvData.length; i++) {
+            tDate[i] = csvData[i][0];
+        }
+
+        /*volume数据*/
+        var volumeData = [];
+        //数组赋值
+        for (var i = 0; i < csvData.length; i++) {
+            volumeData.push(parseInt(csvData[i][5]));
+        }
+        /*绘制交易品种K线*/
+        plotCandle("singleCandle", csvData);
+
+        plotCandle("totalProfit", csvData);
+
+        /*绘制交易品种成交量*/
+        plotVolumeByID("singleVolume", tDate, volumeData);
+
+        /*绘制价格通道*/
+        var padding = {top: 30, right: 70, bottom: 30, left: 70};
+        nDaysChannel("singleCandle", csvData, 20, "red", "green", "1px", padding);
+
+        /*定义策略参数*/
+        var inDays = 20;            //突破天数
+        var outDays = 10;           //出场天数
+        var balance = 100000;       //初始资金
+
+        /*交易策略数据*/
+        var dataOfChanelStrategy = nDaysChanelStrategy(csvData, inDays, outDays, balance);//通道突破策略
+        var profitData = dataOfChanelStrategy.profitData;
+        var tradeData = dataOfChanelStrategy.tradeData;
+
+        /*绘制利润曲线*/
+        plotProfit("singleCandle", profitData, "red");
+        plotTradeLine("singleCandle", tradeData, csvData);
+
+        /*缩放步长*/
+        var step = 20;
+        /*数组偏移值*/
+        var shiftNumber = 0;
+        /*最少显示数量*/
+        var minNumber = 20;
+        /*前一次偏移的索引值*/
+        var previousIndex = 0;
+
+        /*滚轮事件处理函数-实现放大缩小功能*/
+        var testFunc = function (dataForTest) {
+
+            /*阻止默认行为*/
+            event.preventDefault();
+
+            /*鼠标滚轮向上滚动，偏移值增加，可显示数据变少，达到放大功能*/
+            if (event.wheelDelta > 0) {
+                shiftNumber = shiftNumber + step > dataForTest.length - minNumber ? dataForTest.length - minNumber : shiftNumber + step;
+            } else { /*鼠标滚轮向下滚动，偏移值减少，可显示数据增多，达到缩小功能*/
+                shiftNumber = shiftNumber - step <= minNumber ? minNumber : shiftNumber - step;
+            }
+            /*只有当偏移值变化时才重绘*/
+            if (previousIndex != shiftNumber) {
+                /*重绘K线图*/
+                plotCandle("singleCandle", dataForTest, shiftNumber);
+                plotProfit("singleCandle", profitData, "red", shiftNumber);
+                nDaysChannel("singleCandle", csvData, 20, "red", "green", "1px", padding, shiftNumber);
+                plotVolumeByID("singleVolume", tDate, volumeData, shiftNumber);
+            }
+            /*记录本次的偏移值*/
+            previousIndex = shiftNumber;
+        };
+
+        /*注册事件监听器*/
+        divName.addEventListener("mousewheel", function () {
+            testFunc(csvData);
+        }, false);
+
+
     }
 
-    function selectOnchange() {
-        var selected = document.getElementById("selectOption");
-        console.info(selected.options[selected.selectedIndex].value);
+    /*利润曲线显示与否*/
+    function toggleProfitPath() {
+        if (document.getElementById("profitPath").getAttribute("display") == "none") {
+            document.getElementById("profitPath").setAttribute("display", "block");
+        } else {
+            document.getElementById("profitPath").setAttribute("display", "none");
+        }
     }
+
 </script>
 </body>
 </html>

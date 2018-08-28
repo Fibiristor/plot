@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CorrelationMatrix</title>
+    <script src="../scripts/jquery.js"></script>
+    <script src="../scripts/GetSimulateData.js"></script>
+    <script src="../scripts/calculate.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+
+    /*样本文件*/
+    var sampleFile = "../data/candle.csv";
+    /*采样数量*/
+    var lengthOfFutures = 20;
+
+    /*生成模拟数据*/
+    var futures = [];
+    for (var i = 0; i < lengthOfFutures; i++) {
+        var temp = getSimulateData(sampleFile, 1000);
+
+        /*取收盘价*/
+        var futureTemp = temp.map(function (d) {
+            return d[4];
+        });
+        futures.push(futureTemp);
+    }
+
+    /*计算相关系数矩阵*/
+    console.info(getCorrelationMatrix(futures));
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TestCombineProfit</title>
+    <link rel="stylesheet" href="../styles/CombineProfit.css">
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图库-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="UTF-8"></script><!--策略库-->
+    <script src="../scripts/combineProfit.js" charset="utf-8"></script><!--合并利润-->
+</head>
+<body>
+<div id="mainArea">
+    <div id="profit"></div>
+    <div id="profit1"></div>
+    <div id="profit2"></div>
+    <div id="profit3"></div>
+</div>
+<script>
+
+    /*构建品种名称数组*/
+    var data1 = "../data/candle.csv";
+    var data2 = "../data/m.csv";
+    var data3 = "../data/cu.csv";
+    var data4 = "../data/candleTest.csv";
+    var stockArray = [];
+    stockArray.push(data1);
+    stockArray.push(data2);
+    stockArray.push(data3);
+    stockArray.push(data4);
+
+    /*依据品种名称数组构建品种利润数组*/
+    var stocksProfitArray = [];
+    for (var i = 0; i < stockArray.length; i++) {
+        var csvDataTemp = getDataFromCSV(stockArray[i], 'text', false);
+        var profitDataTemp = nDaysChanelStrategy(csvDataTemp, 20, 10, 100000).profitData;
+        stocksProfitArray.push(profitDataTemp);
+    }
+
+    /*合并各品种利润求出总利润*/
+    var combineProfitData;
+    for (var i = 1; i < stockArray.length; i++) {
+        if (i == 1) {
+            combineProfitData = combineProfit(stocksProfitArray[i - 1], stocksProfitArray[i]);
+            continue;
+        }
+        combineProfitData = combineProfit(combineProfitData, stocksProfitArray[i]);
+    }
+
+    var csvData1 = getDataFromCSV(data1, 'text', false);
+    var profitData1 = nDaysChanelStrategy(csvData1, 20, 10, 100000).profitData;
+
+    var csvData2 = getDataFromCSV(data2, 'text', false);
+    var profitData2 = nDaysChanelStrategy(csvData2, 20, 10, 100000).profitData;
+
+    var csvData3 = getDataFromCSV(data3, 'text', false);
+    var profitData3 = nDaysChanelStrategy(csvData3, 20, 10, 100000).profitData;
+
+    plotProfit("profit", combineProfitData, "gray");
+    plotProfit("profit1", profitData1, "blue");
+    plotProfit("profit2", profitData2, "green");
+    plotProfit("profit3", profitData3, "black");
+</script>
+
+
+</body>
+</html>

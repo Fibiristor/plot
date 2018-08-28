@@ -1,0 +1,127 @@
+*{
+    margin: 0px;
+    padding: 0px;
+}
+.header{
+    margin:0 auto;
+    background: steelblue;
+    text-align: center;
+    letter-spacing: 0.8em;
+    font-size: large;
+    width:100%;
+    height: 50px;
+    line-height: 50px;
+    color: white;
+}
+
+.axis path,.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 8px;
+}
+
+.MyRect {
+    fill: steelblue;
+}
+
+.MyText {
+    fill: white;
+    text-anchor: middle;
+}
+
+.tooltip{
+    position: absolute;
+    width: auto;
+    height: auto;
+    text-align: left;
+    padding:0 1em;
+    font-family: Arial;
+    font-size: 12px;
+    color: white;
+    background-color: dimgrey;
+    border-width:2px;
+    border-radius: 2px;
+}
+
+.overlay{
+    fill:none;
+    pointer-events: all;
+}
+
+.yAxisValue{
+    position: absolute;
+    width: auto;
+    height: auto;
+    text-align: left;
+    font-size: 10px;
+    color: black;
+    background-color: lightgray;
+}
+
+.focusLine{
+    position: absolute;
+    width: auto;
+    height: auto;
+}
+
+.unit{
+    margin:0 auto;
+    width:1200px;
+    height: 600px;
+}
+
+#plotArea{
+    margin:10px 10px;
+    border:1px solid #e8e8e8;
+    width:100%;
+    height: 600px;
+    /*float: left;*/
+    background-color: white;
+
+}
+
+#tableArea{
+    margin:10px 10px;
+    border:1px solid #e8e8e8;
+    width: 100%;
+    height:150px;
+    /*float:left;*/
+    overflow-y:auto;
+    background-color:white;
+}
+table{
+    font-size: 8px;
+    font-family: 微软雅黑;
+}
+
+#customers {
+    font-family:微软雅黑;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#customers th {
+    border:1px solid #999;
+    font-size: 8px;
+    text-align: center;
+    padding-top: 5px;
+    padding-bottom: 4px;
+    background-color: steelblue;
+    color: #ffffff;
+}
+
+#customers td{
+    line-height: 14px;
+    padding-left: 6px;
+    font-size: 5px;
+    border: 1px solid #999;
+}
+
+#customers tr:nth-child(odd){
+    background: #ccc;
+}

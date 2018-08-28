@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TestSystemVer3</title>
+    <link rel="stylesheet" href="../styles/TestSystemVer3.css" type="text/css"/>
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图库-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="utf-8"></script><!--策略计算库-->
+    <script src="../scripts/plotTradeLine.js" charset="UTF-8"></script><!--绘制交易线-->
+    <script src="../scripts/GetSimulateData.js" charset="utf-8"></script><!--获取模拟数据-->
+    <script src="../scripts/average.js" charset="utf-8"></script><!--均线-->
+    <script src="../scripts/Grids.js" charset="UTF-8"></script><!--网格线-->
+</head>
+<body>
+
+<div id="single">
+    <div id="singleParamSet">
+        <input type="checkbox">K线</input>
+        <input type="checkbox">均&nbsp;线</input>
+        <input type="checkbox" onchange="toggleProfitPath()">通道线</input>
+        <input type="checkbox">成交量</input>
+    </div>
+    <div id="singleProfit">
+        <div id="detail">利润：<span id="totalProfit"></span>开：<span id="openPrice"></span>高：<span id="highPrice"></span>低：<span
+                id="lowPrice"></span>收：<span id="closePrice"></span><span id="yValue"
+                                                                          style="background-color: #333333; color: white;">hello</span>
+            <span id="xValue" style="background-color: #333333; color: white;"></span>
+        </div>
+        <div id="singleCandle"></div><!--k线-->
+        <div id="singleVolume"></div><!--成交量-->
+        <div id="tableArea"><!--交易表格区-->
+            <table id="customers">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>交易类型</th>
+                    <th>成交日期</th>
+                    <th>成交价格</th>
+                    <th>数量</th>
+                    <th>交易编号</th>
+                    <th>关联编号</th>
+                    <th>持仓时间</th>
+                    <th>利润</th>
+                    <th>利润率</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    window.onload = function () {
+        var padding = {top: 30, right: 70, bottom: 30, left: 70};
+        /*交易品种数据*/
+//        var csvData = getDataFromCSV("../data/bu0001.csv", 'text', false);
+
+        /*模拟数据*/
+        var sampleFile = "../data/candle.csv";
+        var lengthOfSimulateData = 1000;
+        var csvData = getSimulateData(sampleFile, lengthOfSimulateData);
+
+        var divName = document.getElementById("singleCandle");
+
+
+        /*日期数据*/
+        var tDate = [];
+        for (var i = 0; i < csvData.length; i++) {
+            tDate[i] = csvData[i][0];
+        }
+
+        /*volume数据*/
+        var volumeData = [];
+        //数组赋值
+        for (var i = 0; i < csvData.length; i++) {
+            volumeData.push(parseInt(csvData[i][5]));
+        }
+        /*绘制交易品种K线*/
+        plotCandle("singleCandle", csvData);
+
+        /*绘制网格*/
+        plotGrids("singleCandle", 10, 10);
+
+        /*绘制交易品种成交量*/
+        plotVolumeByID("singleVolume", tDate, volumeData);
+
+        /*绘制价格通道*/
+        nDaysChannel("singleCandle", csvData, 20, "red", "green", "1px", padding);
+        nDaysChannel("singleCandle", csvData, 10, "DodgerBlue", "CornflowerBlue ", "1px", padding);
+
+
+        /*绘制收盘价均线*/
+        nDaysAveragePath("singleCandle", csvData, 120, "blue", padding);
+        nDaysAveragePath("singleCandle", csvData, 60, "DeepPink", padding);
+        nDaysAveragePath("singleCandle", csvData, 30, "green", padding);
+        nDaysAveragePath("singleCandle", csvData, 10, "black", padding);
+        nDaysAveragePath("singleCandle", csvData, 5, "orange", padding);
+
+        /*定义策略参数*/
+        var inDays = 20;            //突破天数
+        var outDays = 10;           //出场天数
+        var balance = 500000;       //初始资金
+
+        /*交易策略数据*/
+        var dataOfChanelStrategy = nDaysChanelStrategy(csvData, inDays, outDays, balance);//通道突破策略
+        /*利润数据*/
+        var profitData = dataOfChanelStrategy.profitData;
+        document.getElementById("totalProfit").innerHTML = profitData[profitData.length - 1][1];
+        var tradeData = dataOfChanelStrategy.tradeData;
+
+        /*绘制利润曲线*/
+        plotProfit("singleCandle", profitData, "red");
+        /*绘制交易记录线*/
+        plotTradeLine("singleCandle", csvData, dataOfChanelStrategy);
+
+        /**/
+        var profitDataWithoutDate = profitData.map(function (d) {
+            return d[1];
+        });
+
+        /*最大衰落*/
+        var maxDrawDown = maxFading(profitDataWithoutDate, balance);
+        console.info(maxDrawDown,maxDrawDown.iMin-maxDrawDown.iMax);
+
+//        console.info(maxFading(function () {
+//             var closeData = profitData.map(function (d) {
+//                 return d[1];
+//             });
+//            return closeData;
+//        }));
+
+        /*缩放步长*/
+        var step = 20;
+        /*数组偏移值*/
+        var shiftNumber = 0;
+        /*最少显示数量*/
+        var minNumber = 20;
+        /*前一次偏移的索引值*/
+        var previousIndex = 0;
+
+        /*滚轮事件处理函数-实现放大缩小功能*/
+        var testFunc = function (dataForTest) {
+
+            /*阻止默认滚轮行为*/
+            event.preventDefault();
+
+            /*鼠标滚轮向上滚动，偏移值增加，可显示数据变少，达到放大功能*/
+            if (event.wheelDelta > 0) {
+                shiftNumber = shiftNumber + step > dataForTest.length - minNumber ? dataForTest.length - minNumber : shiftNumber + step;
+            } else { /*鼠标滚轮向下滚动，偏移值减少，可显示数据增多，达到缩小功能*/
+                shiftNumber = shiftNumber - step <= minNumber ? minNumber : shiftNumber - step;
+            }
+
+
+            /*
+             *1、针对tradeLine，averageLine 在缩放画面的时候需要裁剪的数组是已经计算好的数据，而不是对源数据的裁剪，应该在重绘前裁剪已经计算好的数据。
+             *2、针对有averageLine,channel等多条线参数线需要绘制的图案，要优化计算，不能重复计算。
+             *3、样式应该在css中设置，而不是在绘图函数中
+             * */
+
+
+            /*只有当偏移值变化时才重绘*/
+            if (previousIndex != shiftNumber) {
+                /*重绘K线图*/
+                plotCandle("singleCandle", dataForTest, shiftNumber);
+                /*绘制网格*/
+                plotGrids("singleCandle", 10, 10);
+                /*重绘成交量图*/
+                plotVolumeByID("singleVolume", tDate, volumeData, shiftNumber);
+                /*重绘通道线*/
+                nDaysChannel("singleCandle", csvData, 20, "red", "green", "1px", padding, shiftNumber);
+                nDaysChannel("singleCandle", csvData, 10, "DodgerBlue", "CornflowerBlue ", "1px", padding, shiftNumber);
+                /*重绘均价线*/
+                nDaysAveragePath("singleCandle", csvData, 120, "blue", padding, shiftNumber);
+                nDaysAveragePath("singleCandle", csvData, 60, "DeepPink", padding, shiftNumber);
+                nDaysAveragePath("singleCandle", csvData, 30, "green", padding, shiftNumber);
+                nDaysAveragePath("singleCandle", csvData, 10, "black", padding, shiftNumber);
+                nDaysAveragePath("singleCandle", csvData, 5, "orange", padding, shiftNumber);
+
+                /*重绘利润图*/
+                plotProfit("singleCandle", profitData, "red", shiftNumber);
+                /*重绘交易记录线*/
+                plotTradeLine("singleCandle", csvData, shiftNumber);
+
+
+            }
+            /*记录本次的偏移值*/
+            previousIndex = shiftNumber;
+        };
+
+        /*注册事件监听器*/
+        divName.addEventListener("mousewheel", function () {
+            testFunc(csvData);
+        }, false);
+
+
+        //交易数据表格
+        var tBody = document.getElementsByTagName("tbody")[0];
+
+        /*添加交易数据记录*/
+        for (var i = 0; i < tradeData.length; i++) {
+            var dataRow = getDataRow(i, tradeData[i]);
+            /*创建表格*/
+            tBody.appendChild(dataRow);
+            /*添加记录*/
+        }
+
+        /*创建一条数据记录*/
+        function getDataRow(i, data) {
+            /*创建行*/
+            var row = document.createElement("tr");
+
+            /*交易序号*/
+            var idCell = document.createElement("td");
+            idCell.innerHTML = i + 1;
+            row.appendChild(idCell);
+
+            /*交易类型*/
+            var directionCell = document.createElement("td");
+            directionCell.innerHTML = data.direction;
+            row.appendChild(directionCell);
+
+            /*成交日期*/
+            var tradeDateCell = document.createElement("td");
+            tradeDateCell.innerHTML = data.tradeDate;
+            row.appendChild(tradeDateCell);
+
+            /*成交价格*/
+            var priceCell = document.createElement("td");
+            priceCell.innerHTML = data.price;
+            row.appendChild(priceCell);
+
+            /*交易数量*/
+            var amountCell = document.createElement("td");
+            amountCell.innerHTML = data.amount;
+            row.appendChild(amountCell);
+
+            /*交易编号*/
+            var codeCell = document.createElement("td");
+            codeCell.innerHTML = data.code;
+            row.appendChild(codeCell);
+
+
+            /*关联编号*/
+            var preCodeCell = document.createElement("td");
+            preCodeCell.innerHTML = data.preCode;
+            row.appendChild(preCodeCell);
+
+            /*持仓时间*/
+            var preCodeCell = document.createElement("td");
+            if (data.preCode != "") {
+                /*查询字符串中第一个“-”的位置，据此截取时间*/
+                var indexOfCode = data.code.indexOf("-");
+                var indexOfPreCode = data.preCode.indexOf("-");
+                /*计算两个时间之间的毫秒数差值*/
+                var daysDiff = new Date(data.code.slice(0, indexOfCode)).getTime() - new Date(data.preCode.slice(0, indexOfPreCode)).getTime();
+                /*转换两个时间之间相差的天数*/
+                var daysKeep = Math.floor(daysDiff / (24 * 3600 * 1000));
+            }
+            preCodeCell.innerHTML = daysKeep != null ? daysKeep : "--";
+            row.appendChild(preCodeCell);
+
+
+            /*利润*/
+            var profitCell = document.createElement("td");
+            /*利润率*/
+            var profitPercentCell = document.createElement("td");
+
+            /*判断多头还是空头*/
+            if (data.direction.indexOf("empty") >= 0) {
+                /*提取进场价格*/
+                var indexArray = [];
+                for (var i = 0; i < data.preCode.length; i++) {
+                    var obj = data.preCode.charAt(i);
+                    if (obj == "-") {
+                        indexArray.push(i);
+                    }
+                }
+                var priceIn = data.preCode.slice(indexArray[0] + 1, indexArray[1]);
+
+                if (data.direction.indexOf("long") >= 0) {
+                    /*多头平仓*/
+                    var profitPer = (data.price - priceIn) * data.amount;
+                    profitCell.innerHTML = profitPer;
+                    profitPercentCell.innerHTML = Math.round((profitPer / priceIn) * 100) / 100;
+
+                } else if (data.direction.indexOf("short") >= 0) {
+                    /*空头平仓*/
+                    var profitPer = (priceIn - data.price) * data.amount;
+                    profitCell.innerHTML = profitPer;
+                    profitPercentCell.innerHTML = Math.round((profitPer / priceIn) * 100) / 100;
+                }
+
+            }
+            row.appendChild(profitCell);
+            row.appendChild(profitPercentCell);
+
+            return row;
+        }
+
+
+    }
+
+
+    /*利润曲线显示与否*/
+    function toggleProfitPath() {
+        var target = document.getElementById("profitPath");
+        var toggle = target.getAttribute("display");
+        toggle == "none" ? target.setAttribute("display", "block") : target.setAttribute("display", "none");
+    }
+
+    //    var options = document.getElementById("selectedOptions").options;
+    //    for (var i = 0; i < options.length; i++) {
+    //
+    //        console.info(options[i].text);
+    //
+    //    }
+
+
+</script>
+</body>
+</html>

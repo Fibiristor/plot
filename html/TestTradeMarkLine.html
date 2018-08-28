@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../scripts/jquery.js" charset="UTF-8"></script>
+    <script src="../scripts/d3.js" charset="utf-8"></script>
+    <script src="../scripts/nDaysChanelStrategy.js" charset="UTF-8"></script>
+    <script src="../scripts/nDaysChanelStrategy.js" charset="UTF-8"></script>
+    <script src="../scripts/calculate.js" charset="utf-8"></script>
+</head>
+<body>
+<script type="text/javascript">
+
+    function plotTradeLine(cellId, tradeData, padding) {
+        var svgCell = document.getElementById(cellId).firstElementChild.firstElementChild;
+        var svg = d3.select(svgCell);
+        var width = svgCell.clientWidth;
+        var height = svgCell.clientHeight;
+
+
+//        var csvFile = "../data/candle.csv";
+//        var csvData = getDataFromCSV(csvFile, "text", false);
+//        var tradeData = nDaysChanelStrategy(csvData, 20, 10, 100000).tradeData;
+//    console.info(tradeData);
+
+        //交易连线数据
+        var tradeArray = [];
+        for (var i = 0; i < tradeData.length; i++) {
+            //多头交易建仓单
+            if (tradeData[i].direction == "long") {
+                //多头建仓日期
+                var buyDate = tradeData[i].tradeDate;
+                //建仓价格
+                var buyPrice = tradeData[i].price;
+                //建仓编号
+                var code = tradeData[i].code;
+                //查找多头平仓数据（1:交易方向为long-empty;2:交易的predCode==code)
+                for (var j = i + 1; j < tradeData.length; j++) {
+                    if (tradeData[j].direction == "long-empty" && tradeData[j].preCode == code) {
+                        //平仓价格
+                        var sellPrice = tradeData[j].price;
+                        //平仓日期
+                        var sellDate = tradeData[j].tradeDate;
+                        //被平仓头寸编号
+                        var preCode = tradeData[j].preCode;
+                        //将一个完整的多头建仓-平仓数据存入数组
+                        tradeArray.push({
+                            buyPrice: buyPrice,
+                            buyDate: buyDate,
+                            code: code,
+                            sellPrice: sellPrice,
+                            sellDate: sellDate,
+                            preCode: preCode
+                        });
+                        //一旦查找到配对成交数据，终止本次查询
+                        break;
+                    }
+                }
+            }
+            //空头交易建仓单
+            if (tradeData[i].direction == "short") {
+                //空头建仓日期
+                var buyDate = tradeData[i].tradeDate;
+                //空头建仓价格
+                var buyPrice = tradeData[i].price;
+                //建仓编号
+                var code = tradeData[i].code;
+                //查找空头平仓数据（1:交易方向short-empty;2:交易的preCode = code)
+                for (var j = i + 1; j < tradeData.length; j++) {
+                    if (tradeData[j].direction == "short-empty" && tradeData[j].preCode == code) {
+                        //平仓价格
+                        var sellPrice = tradeData[j].price;
+                        //平仓日期
+                        var sellDate = tradeData[j].tradeDate;
+                        //被平仓头寸编号
+                        var preCode = tradeData[j].preCode;
+                        //将一个完整的空头建仓-平仓数据存入数组
+                        tradeArray.push({
+                            buyPrice: buyPrice,
+                            buyDate: buyDate,
+                            code: code,
+                            sellPrice: sellPrice,
+                            sellDate: sellDate,
+                            preCode: preCode
+                        });
+                        //一旦查找到配对成交数据，终止本次查询
+                        break;
+                    }
+                }
+
+            }
+            //如果是非建仓单据，则开始下一轮查询
+            else if (tradeData[i].direction == "long-empty" || tradeData[i].direction == "short-empty") {
+                continue;
+            }
+        }
+
+        console.info(tradeArray);
+
+        //声明用于存放交易连线的数组
+        //[[[买日期,买价格],[卖日期,卖价格]],[[买日期,买价格],[卖日期,卖价格]],[[买日期,买价格],[卖日期,卖价格]]...]
+        var lineArray = [];
+
+        //初始化lineArray数组
+        for (var x = 0; x < tradeArray.length; x++) {
+            lineArray[x] = [];
+            for (var y = 0; y < 2; y++) {
+                lineArray[x][y] = [];
+                for (var z = 0; z < 2; z++) {
+                    lineArray[x][y][z] = 0;
+                    lineArray[x][y][z] = 0;
+                }
+            }
+        }
+
+        console.info(lineArray);
+
+
+        //根据xScale和yScale将tradeArray数据转换并填充lineArray数组
+        //padding,xScale,yScale;
+
+        for (var i = 0; i < tradeArray.length; i++) {
+            //建仓日期
+            lineArray[i][0][0] = padding.left + xScale(tradeArray[i].buyDate) + xScale.rangeBand() * 0.5;
+            //建仓价格
+            lineArray[i][0][1] = height - padding.bottom - yScale(tradeArray[i].buyPrice);
+            //平仓日期
+            lineArray[i][1][0] = padding.left + xScale(tradeArray[i].sellDate) + xScale.rangeBand() * 0.5;
+            //平仓价格
+            lineArray[i][1][1] = height - padding.bottom - yScale(tradeArray[i].sellPrice);
+        }
+
+        //交易连线路径生成器
+        var tradePath = d3.svg.line();
+
+        //        console.log(lineArray);
+
+
+        //每笔交易的利润数组
+//        var profit = [];
+        //绘制交易连线
+        for (var i = 0; i < lineArray.length; i++) {
+            svg.append("path")
+                    .attr("d", tradePath(lineArray[i]))
+                    .attr("stroke", function () {
+                        //判断利润：多头：平仓>建仓:red 否则green;
+                        if (tradeArray[i].code.match(/long/)) {
+//                            var temp = lineArray[i][0][1] - lineArray[i][1][1];
+//                            profit.push(temp);
+////                            console.log(temp);
+                            return lineArray[i][0][1] > lineArray[i][1][1] ? "red" : "green";
+                        //判断利润：空头：平仓<建仓:red 否则green;
+                        } else if (tradeArray[i].code.match(/short/)) {
+//                            var temp = lineArray[i][1][1] - lineArray[i][0][1];
+//                            profit.push(temp);
+////                            console.log(lineArray[i][1][1] - lineArray[i][0][1]);
+                            return lineArray[i][0][1] > lineArray[i][1][1] ? "green" : "red";
+                        }
+                    })
+                    .attr("stroke-width", "2px")
+                    .attr("fill", "none");
+        }
+
+    }
+</script>
+
+</body>
+</html>

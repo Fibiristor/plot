@@ -5,24 +5,38 @@
 
 #single{
     width:1600px;
-    height: 800px;
+    height: 600px;
 }
 #singleParamSet{
     width:200px;
-    height: 800px;
+    height: 600px;
     float: left;
 }
 #singleProfit{
     width:1400px;
-    height:800px;
+    height:600px;
     float: left;
     font-size: 8px;
 }
 
 #singleCandle{
     width: 1400px;
-    height:600px;
+    height:400px;
+    background-color:#efefef;
 }
+#detail{
+    width: 1400px;
+    height: 20px;
+    background-color: #eeeeee;
+}
+
+
+#singleCandle line{
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
 #singleVolume{
     width:1400px;
     height:200px;
@@ -32,4 +46,50 @@
     fill: none;
     stroke: black;
     shape-rendering: crispEdges;
+}
+
+.gridPath{
+    shape-rendering: crispEdges;
+
+}
+
+#tableArea{
+    /*margin:10px 10px;*/
+    border:1px solid #e8e8e8;
+    width: 100%;
+    height:150px;
+    /*float:left;*/
+    overflow-y:auto;
+    background-color:white;
+}
+table{
+    font-size: 8px;
+    font-family: 微软雅黑;
+}
+
+#customers {
+    font-family:微软雅黑;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#customers th {
+    border:1px solid #999;
+    font-size: 8px;
+    text-align: center;
+    padding-top: 5px;
+    padding-bottom: 4px;
+    background-color: steelblue;
+    color: #ffffff;
+}
+
+#customers td{
+    line-height: 14px;
+    padding-left: 6px;
+    font-size: 5px;
+    border: 1px solid #999;
+}
+
+#customers tr:nth-child(odd){
+    background: #ccc;
 }

@@ -1,6 +1,11 @@
 /**
  * Created by fibiristor on 2018/3/10.
  */
+/*
+* source:csv文件名称
+* type:‘text’
+* asy:false->同步  true->异步
+* */
 function getData(source,type,asy) {
     var csvData = [[1, 1, 1, 1, 1, 1]];//tradeDate,open,high,low,close,volume
 

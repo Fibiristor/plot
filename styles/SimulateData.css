@@ -1,0 +1,8 @@
+* {
+    margin: auto;
+    padding:0;
+}
+#simulateCandle{
+    width:1600px;
+    height:600px;
+}

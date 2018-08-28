@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HistogramTest</title>
+    <link rel="stylesheet" href="../styles/histogramTest.css" type="text/css"/>
+    <script src="../scripts/jquery.js"></script>
+    <script src="../scripts/d3.js"></script>
+    <script src="../scripts/calculate.js"></script>
+    <script src="../scripts/nDaysChanelStrategy.js"></script>
+
+</head>
+<body>
+<div id="histogram" style="width: 500px; height: 150px"></div>
+<script type="text/javascript">
+    var fileName = "../data/au0001.csv";
+    var csvData = getDataFromCSV(fileName, "text", false);
+    var inDays = 20;
+    var outDays = 10;
+    var balance = 500000;
+    var tradeData = nDaysChanelStrategy(csvData, inDays, outDays, balance).tradeData;
+
+    plotHistogram("histogram",tradeData, 50);
+
+    function plotHistogram(cellId,tradeData, binsNum) {
+        var profitPerDay = getPerTradeProfit(tradeData);
+
+        /*直方图布局*/
+        var histogram = d3.layout.histogram()
+                .range(d3.extent(profitPerDay))
+                .bins(binsNum)
+                .frequency(true);
+        var hisData = histogram(profitPerDay);
+
+        var oo = document.getElementById(cellId);
+        var width = oo.clientWidth;
+        var height = oo.clientHeight;
+
+        var svg = d3.select(oo)
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+        xTicks = hisData.map(function (d) {
+            return d.x;
+        });
+        var xScale = d3.scale.ordinal()
+                .domain(xTicks)
+                .rangeRoundBands([0, width - 30], 0.1);
+
+        var padding = {top: 30, right: 30, bottom: 30, left: 30};
+        var xAxis = d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom")
+                .tickFormat(d3.format(".0f"));
+
+        svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + 0 + "," + (height - padding.bottom) + ")")
+                .call(xAxis);
+
+        var yScale = d3.scale.linear()
+                .domain([d3.min(hisData, function (d) {
+                    return d.y;
+                }), d3.max(hisData, function (d) {
+                    return d.y;
+                })])
+                .range([0, height]);
+
+        var gRect = svg.append("g")
+                .attr("transform", "translate(" + 0 + "," + (-padding.bottom) + ")");
+
+        gRect.selectAll("rect")
+                .data(hisData)
+                .enter()
+                .append("rect")
+                .attr("class", "rect")
+                .attr("x", function (d) {
+                    return xScale(d.x);
+                })
+                .attr("y", function (d) {
+                    return height - yScale(d.y);
+                })
+                .attr("width", function () {
+                    return xScale.rangeBand();
+                })
+                .attr("height", function (d) {
+                    return yScale(d.y);
+                })
+                .on("mouseover", function () {
+                    d3.select(this)
+                            .style("fill", "#ff4a68");
+//                    console.info(d);
+                })
+                .on("mouseleave",function () {
+
+                    d3.select(this).style("fill", "steelblue");
+//                    d3.select(this).attr("opacity", 1);
+                });
+
+    }
+
+</script>
+</body>
+</html>

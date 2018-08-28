@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../styles/SimulateData.css" type="text/css"/>
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图库-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="utf-8"></script><!--策略计算库-->
+    <script src="../scripts/GetSimulateData.js" charset="utf-8"></script><!--模拟数据-->
+</head>
+<body>
+<div id="simulateCandle">
+
+</div>
+
+<script type="text/javascript">
+
+    //样本数据文件
+    var csvDataFile = "../data/cu.csv";
+
+    //需要生成的模拟数据长度
+    var lengthOfSimulateData = 300;
+
+    var simulateData = getSimulateData(csvDataFile, lengthOfSimulateData);
+
+
+    plotCandle("simulateCandle",simulateData);
+//    var profitData = nDaysChanelStrategy(simulateData,20,10,200000).profitData;
+//    plotProfit("simulateCandle", profitData, "red");
+
+</script>
+</body>
+</html>

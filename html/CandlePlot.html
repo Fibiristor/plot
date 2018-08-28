@@ -3,66 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>CandlePlot</title>
-    <script src="jquery.js" charset="UTF-8"></script>
-    <script src="d3.js" charset="utf-8"></script>
-    <script src="calculate.js" charset="UTF-8"></script>
-    <script src="plotUtil.js" charset="UTF-8"></script>
-    <script src="average.js" charset="UTF-8"></script>
-    <script src="channel.js" charset="UTF-8"></script>
-    <script src="ATR.js" charset="UTF-8"></script>
-    <script src="nDaysChanelStrategy.js" charset="UTF-8"></script>
-    <link rel="stylesheet" href="style.css">
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图工具库-->
+    <script src="../scripts/average.js" charset="UTF-8"></script><!--平均值计算-->
+
+    <script src="../scripts/channel.js" charset="UTF-8"></script><!--通道突破计算-->
+    <script src="../scripts/ATR.js" charset="UTF-8"></script><!--波动幅度计算-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="UTF-8"></script><!--通道突破策略-->
+    <link rel="stylesheet" href="../styles/style.css">
 </head>
 <body>
-<style>
-    #customers {
-        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
-        width: 100%;
-        border-collapse: collapse;
-    }
 
-    #customers td, #customers th {
-        font-size: 0.4em;
-        border: 1px solid #98bf21;
-        padding: 3px 7px 2px 7px;
-    }
-
-    #customers th {
-        font-size: 1em;
-        text-align: left;
-        padding-top: 5px;
-        padding-bottom: 4px;
-        background-color: #A7C942;
-        color: #ffffff;
-    }
-
-    #customers tr.alt td {
-        color: #000000;
-        background-color: #EAF2D3;
-    }
-</style>
-<div style="border: dashed">
-    <div id="plotArea" style="background-color:white;width: 70%;height:600px;float:left; display:inline"></div>
-    <div id="tableArea" style="background-color:white;width: 30%;height:600px;float:left; display:inline;position:absolute;overflow-y:auto">
-        <table id="customers">
-            <thead>
-            <tr>
-                <th>序号</th>
-                <th>交易类型</th>
-                <th>成交日期</th>
-                <th>成交价格</th>
-                <th>数量</th>
-                <th>交易编号</th>
-                <th>关联编号</th>
-                <th>持仓时间</th>
-                <th>利润</th>
-                <th>利润率</th>
-            </tr>
-            </thead>
-            <tbody>
-
-            </tbody>
-        </table>
+<div>
+    <div class="header">期货策略交易测试系统</div><!--标题-->
+    <div class="unit"><!--品种单元：包括k线，指标，交易轨迹，交易数据表-->
+        <div id="plotArea"></div><!--绘图区-->
+        <div id="tableArea"><!--表格区-->
+            <table id="customers">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>交易类型</th>
+                    <th>成交日期</th>
+                    <th>成交价格</th>
+                    <th>数量</th>
+                    <th>交易编号</th>
+                    <th>关联编号</th>
+                    <th>持仓时间</th>
+                    <th>利润</th>
+                    <th>利润率</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -82,19 +59,62 @@
 
 <script>
 
+    /*
+     * cellId:图表绘制区域的div标识
+     * dataSourceFile：数据文件
+     * */
     function cellPlot(cellId, dataSourceFile) {
+        var candleWidth = "auto";
+        var candleHeight = "300px";
 
-        var candle = document.createElement("div");
-        candle.style.width = "auto";
-        candle.style.height = "400px";
-        document.getElementById(cellId).appendChild(candle);
+        var volumeWidth = "auto";
+        var volumeHeight = "150px";
 
-        var volume = document.createElement("div");
-        volume.style.width = "auto";
-        volume.style.height = "200px";
-        document.getElementById(cellId).appendChild(volume);
+        var paramToggleWidth = "100px";
+        var paramToggleHeight = "300px";
 
-        //candle原始数据
+        function appendPlotCell() {
+
+            /*设置参数开关*/
+            var paramToggle = document.createElement("div");
+            paramToggle.width = paramToggleWidth;
+            paramToggle.height = paramToggleHeight;
+            paramToggle.id = "paramToggle";
+            paramToggle.backgroundColor = "blue";
+
+            document.getElementById(cellId).appendChild(paramToggle);
+
+            /*............................k线部分............................*/
+            /*创建一个div容器元素*/
+            var candle = document.createElement("div");
+            /*设置宽度*/
+            candle.style.width = candleWidth;
+            /*设置高度*/
+            candle.style.height = candleHeight;
+            /*设置id名称*/
+            candle.id = "candle";
+            /*设置背景色*/
+            candle.backgroundColor = "green";
+            /*将创建的k线div容器作为子节点添加入父节点cellId中*/
+            document.getElementById(cellId).appendChild(candle);
+
+
+            /*volume部分*/
+            var volume = document.createElement("div");
+            /*创建一个div*/
+            volume.style.width = volumeWidth;
+            /*设置宽度*/
+            volume.style.height = volumeHeight;
+            /*设置高度*/
+            volume.id = "volume"
+            document.getElementById(cellId).appendChild(volume);
+            /*将创建的div作为子节点添加到ID为cellID的父节点中*/
+        }
+
+        /*设置并添加需要绘制的区域*/
+        appendPlotCell();
+
+        //获取品种原始数据
         {
             var csvData = getDataFromCSV(dataSourceFile, 'text', false);
         }
@@ -106,10 +126,21 @@
             var outDays = 10;           //出场天数
             var balance = 100000;       //初始资金
 
-            var dataOfChanelStrategy = nDaysChanelStrategy(dataSourceFile, inDays, outDays, balance);
+            /*交易策略数据*/
+            var dataOfChanelStrategy = nDaysChanelStrategy(csvData, inDays, outDays, balance);//通道突破策略
             var tradeData = dataOfChanelStrategy.tradeData;                //交易数据
             var profitData = dataOfChanelStrategy.profitData;              //利润数据
 
+//            console.log(dataOfChanelStrategy);
+
+
+            /*衰落*/
+            var dataForFading = [];
+            for (var i = 0; i < profitData.length; i++) {
+                dataForFading.push(profitData[i][1] + 2565);
+            }
+//            console.log(dataForFading);
+//            maxFading(dataForFading);
 
             //交易连线数据
             var tradeArray = [];
@@ -172,7 +203,7 @@
 
         //绘图区域尺寸
         var width = document.getElementById(cellId).firstChild.offsetWidth;
-        var height = 400;
+        var height = 300;
 
         //绘图区域边框尺寸
         var padding = {top: 30, right: 70, bottom: 30, left: 70};
@@ -376,8 +407,8 @@
         //volume部分
         {
 
-            var volumeWidth = width;
-            var volumeHeight = height / 2;
+//            var volumeWidth = width;
+//            var volumeHeight = height / 2;
 
 //
             //定义volume数组
@@ -587,25 +618,34 @@
 
 
         //利润曲线
+
+        /*日期数据*/
         var pDate = [];
+        /*利润数据*/
         var pData = [];
+
         for (var i = 0; i < profitData.length; i++) {
             pDate.push(profitData[i][0]);
             pData.push(profitData[i][1]);
         }
 
+
+        /*利润最大值*/
         var pDataMax = d3.max(pData);
 
+        /*y轴比例尺*/
         var yScaleProfit = d3.scale.linear()
-                .domain([-0.5 * pDataMax, pDataMax])
+                .domain([-0.5 * pDataMax, pDataMax])/*利润有可能为负值，所以输入域空间为-0.5Max~Max*/
                 .rangeRound([height - padding.top - padding.bottom, 0]);
 
 
+        /*根据比例尺计算绘图数据*/
         for (var i = 0; i < pData.length; i++) {
             pDate[i] = padding.left + xScale.rangeBand() * 0.5 + xScale(pDate[i]);
             pData[i] = padding.bottom + yScaleProfit(pData[i]);
         }
 
+        /*合并日期和利润数据*/
         var pDataForDraw = d3.zip(pDate, pData);
 
         //利润路径生成器
@@ -634,7 +674,6 @@
                 .attr("class", "axis")
                 .attr("transform", "translate(" + (width - padding.right) + "," + padding.top + ")")
                 .call(yAxisProfit);
-
 
         function mousemove() {
             var mouseX = d3.mouse(this)[0];
@@ -681,59 +720,69 @@
         //交易数据表格
 
         var tBody = document.getElementsByTagName("tbody")[0];
-        console.log(tBody);
-        for(var i = 0; i<tradeData.length; i++){
-            var dataRow = getDataRow(i,tradeData[i]);
+//        console.log(tBody);
+
+        /*添加交易数据记录*/
+        for (var i = 0; i < tradeData.length; i++) {
+            var dataRow = getDataRow(i, tradeData[i]);
+            /*创建表格*/
             tBody.appendChild(dataRow);
+            /*添加记录*/
         }
 
-        function getDataRow(i,data) {
+        /*创建一条数据记录*/
+        function getDataRow(i, data) {
+            /*创建行*/
             var row = document.createElement("tr");
 
+            /*交易序号*/
             var idCell = document.createElement("td");
-            idCell.innerHTML = i+1;
+            idCell.innerHTML = i + 1;
             row.appendChild(idCell);
 
+            /*交易数量*/
             var amountCell = document.createElement("td");
-            amountCell.innerHTML=data.amount;
+            amountCell.innerHTML = data.amount;
             row.appendChild(amountCell);
 
+            /*交易编号*/
             var codeCell = document.createElement("td");
-            codeCell.innerHTML=data.code;
+            codeCell.innerHTML = data.code;
             row.appendChild(codeCell);
 
+            /*交易类型*/
             var directionCell = document.createElement("td");
-            directionCell.innerHTML=data.direction;
+            directionCell.innerHTML = data.direction;
             row.appendChild(directionCell);
 
+            /*关联编号*/
             var preCodeCell = document.createElement("td");
-            preCodeCell.innerHTML=data.preCode;
+            preCodeCell.innerHTML = data.preCode;
             row.appendChild(preCodeCell);
 
+            /*成交价格*/
             var priceCell = document.createElement("td");
-            priceCell.innerHTML=data.price;
+            priceCell.innerHTML = data.price;
             row.appendChild(priceCell);
 
+            /*成交日期*/
             var tradeDateCell = document.createElement("td");
-            tradeDateCell.innerHTML=data.tradeDate;
+            tradeDateCell.innerHTML = data.tradeDate;
             row.appendChild(tradeDateCell);
 
             var profitCell = document.createElement("td");
-            profitCell.innerHTML=0;
+            profitCell.innerHTML = 0;
             row.appendChild(profitCell);
 
             var profitPercCell = document.createElement("td");
-            profitPercCell.innerHTML=0;
+            profitPercCell.innerHTML = 0;
             row.appendChild(profitPercCell);
 
             return row;
         }
     }
 
-    cellPlot("plotArea", "cu.csv");
-
-
-
+    cellPlot("plotArea", "../data/candleTest.csv");
 
 </script>
 </body>

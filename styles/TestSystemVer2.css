@@ -23,9 +23,9 @@
 .totalProfit{
     width:998px;
     height: 398px;
-    background: steelblue;
     border:1px solid white;
     float:left;
+    font-size: 8px;
 }
 .single{
     margin:5px;
@@ -43,9 +43,9 @@
 .singleProfit{
     width:998px;
     height:398px;
-    background: steelblue;
     border:1px solid white;
     float: left;
+    font-size: 8px;
 }
 .totalParamSet li{
     list-style-type: none;
@@ -67,3 +67,20 @@
 .totalParamSet table font{
     font-size: 6px;
 }
+
+.axis path,
+.axis line{
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+#singleCandle{
+    height:65%;
+}
+#singleVolume{
+    height:35%;
+}
+/*#candle{*/
+    /*padding:30px 70px 30px 70px;*/
+/*}*/
