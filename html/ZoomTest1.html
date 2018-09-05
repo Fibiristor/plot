@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Zoom + Pan</title>
+<style>
+
+    body {
+        position: relative;
+        width: 960px;
+    }
+
+    svg {
+        font: 15px sans-serif;
+        shape-rendering: crispEdges;
+    }
+
+    rect {
+        fill: #ddd;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: red;
+    }
+
+    .buttons {
+        position: absolute;
+        right: 30px;
+        top: 30px;
+    }
+
+</style>
+<div class="buttons">
+    <button data-zoom="+1">Zoom In</button>
+    <button data-zoom="-1">Zoom Out</button>
+</div>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+
+    /*设置绘图区域边框*/
+    var margin = {top: 20, right: 20, bottom: 30, left: 40},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+    /*x轴比例尺*/
+    var x = d3.scale.linear()/*线性比例尺*/
+            .domain([-width / 2, width / 2])/*输入域*/
+            .range([0, width]);/*值域*/
+
+    /*y轴比例尺*/
+    var y = d3.scale.linear()/*线性比例尺*/
+            .domain([-height / 2, height / 2])/*输入域*/
+            .range([height, 0]);/*值域*/
+
+    /*x轴*/
+    var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom")/*底部坐标*/
+            .tickSize(-height);/*利用x轴的tickSize来画纵向网格*/
+
+    var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left")/*左侧坐标*/
+            .ticks(5)/*控制y轴标尺密度*/
+            .tickSize(-width);/*利用y轴的tickSize来画横向网格*/
+
+    var zoom = d3.behavior.zoom()
+            .x(x)/*x轴比例尺*/
+            .y(y)/*y轴比例尺*/
+            .scaleExtent([0.2, 10])/*缩放范围*/
+            .center([width / 2, height / 2])/*定义缩放中心*/
+            .size([width, height])
+            .on("zoom", zoomed);/*定义响应函数*/
+
+    var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .call(zoom);
+
+    /*在上一个g元素中放置填充rect,不然g元素无法接收缩放消息*/
+    svg.append("rect")
+            .attr("width", width)
+            .attr("height", height);
+
+    /*将x轴包裹在g元素中*/
+    svg.append("g")
+            .attr("class", "x axis")/*设置此属性不用改变样式，而是用来被选择*/
+            .attr("transform", "translate(0," + height + ")")/*移动到底部*/
+            .call(xAxis);/*调用xAxis*/
+
+    svg.append("g")
+            .attr("class", "y axis")/*设置此属性不用改变样式，而是用来被选择*/
+            .call(yAxis);/*调用yAxis*/
+
+    /*给按钮添加响应click函数*/
+//    d3.selectAll("button[data-zoom]")/*选择带有“data-zoom”属性的所有button元素-----参考CSS选择方法*/
+//            .on("click", clicked);
+
+    function zoomed() {
+        svg.select(".x.axis").call(xAxis);
+        svg.select(".y.axis").call(yAxis);
+    }
+
+//    function clicked() {
+//        svg.call(zoom.event); // https://github.com/mbostock/d3/issues/2387
+//
+//        // Record the coordinates (in data space) of the center (in screen space).
+//        var center0 = zoom.center(), translate0 = zoom.translate(), coordinates0 = coordinates(center0);
+//        zoom.scale(zoom.scale() * Math.pow(2, +this.getAttribute("data-zoom")));
+//
+//        // Translate back to the center.
+//        var center1 = point(coordinates0);
+//        zoom.translate([translate0[0] + center0[0] - center1[0], translate0[1] + center0[1] - center1[1]]);
+//
+//        svg.transition().duration(750).call(zoom.event);
+//    }
+//
+//    function coordinates(point) {
+//        var scale = zoom.scale(), translate = zoom.translate();
+//        return [(point[0] - translate[0]) / scale, (point[1] - translate[1]) / scale];
+//    }
+//
+//    function point(coordinates) {
+//        var scale = zoom.scale(), translate = zoom.translate();
+//        return [coordinates[0] * scale + translate[0], coordinates[1] * scale + translate[1]];
+//    }
+
+</script>

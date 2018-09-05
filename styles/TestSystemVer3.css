@@ -22,7 +22,7 @@
 #singleCandle{
     width: 1400px;
     height:400px;
-    background-color:#efefef;
+    background-color:white;
 }
 #detail{
     width: 1400px;
@@ -41,16 +41,29 @@
     width:1400px;
     height:200px;
 }
-.axis path,
-.axis line{
+
+/*.axis line{*/
+    /*fill: blue;*/
+    /*stroke: red;*/
+    /*shape-rendering: crispEdges;*/
+/*}*/
+
+.axis path,line{
     fill: none;
     stroke: black;
     shape-rendering: crispEdges;
 }
 
-.gridPath{
-    shape-rendering: crispEdges;
+/*.tick line {*/
+    /*fill: none;*/
+    /*stroke: blue;*/
+    /*shape-rendering: crispEdges;*/
+/*}*/
 
+.tick line {
+    stroke: 1px solid green;
+    stroke-dasharray: 2;
+    opacity: 0.2;
 }
 
 #tableArea{

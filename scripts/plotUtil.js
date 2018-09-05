@@ -6,7 +6,7 @@
 /*dataSourceFile:csv格式数据文件*/
 /*cellId:用于放置candle的div容器id*/
 /*默认id:candle*/
-function plotCandle(cellId, csvData, beginIndex) {
+function plotCandle(cellId, csvData, sPP, beginIndex) {
 
     csvData = csvData.slice(beginIndex);
 
@@ -23,8 +23,7 @@ function plotCandle(cellId, csvData, beginIndex) {
         var candle = document.createElement("div");
     }
 
-    /*padding尺寸*/
-    var padding = {top: 30, right: 70, bottom: 30, left: 70}
+    var padding = sPP.padding;
 
     //绘图区域尺寸设置
     /*宽*/
@@ -45,45 +44,47 @@ function plotCandle(cellId, csvData, beginIndex) {
     /*将创建的k线div容器作为子节点添加入父节点cell中*/
     cell.appendChild(candle);
 
+    var tDate = sPP.tDate;
 
-    //从csvData中提取日期数据数组
-    var tDate = [];
-    for (var i = 0; i < csvData.length; i++) {
-        tDate[i] = parseInt(new Date(csvData[i][0]).getTime());
-    }
+    var xScale = sPP.xScale;
 
-    //获取每日最高价中的最大值
-    var valueMax = d3.max(csvData, function (d) {
-        return d[2];
-    });
+    var yScale = sPP.yScale;
 
-    //获取每日最低价中的最小值
-    var valueMin = d3.min(csvData, function (d) {
-        return d[3];
-    });
+    /*xScale For zoom*/
+    var x = d3.scale.linear()/*线性比例尺*/
+        .domain([-width / 2, width / 2])/*输入域*/
+        .range([0, width]);
+    /*值域*/
 
-    //x轴比例尺(日期)
-    var xScale = d3.scale.ordinal()  //序数比例尺
-        .domain(tDate)
-        .rangeBands([0, width - padding.left - padding.right], 0.2);
+    /*yScale for zoom*/
+    var y = d3.scale.linear()/*线性比例尺*/
+        .domain([-height / 2, height / 2])/*输入域*/
+        .range([height, 0]);
+    /*值域*/
 
-
-    // var xScale = d3.scale.linear() //线性比例尺
-    //     .domain(d3.extent(tDate))
-    //     .rangeRound([0, width - padding.left - padding.right]);
-
-
-    //y轴比例尺
-    var yScale = d3.scale.linear()  //线性比例尺
-        .domain([valueMin, valueMax])
-        .rangeRound([0, height - padding.top - padding.bottom]);
-
+    var zoom = d3.behavior.zoom()
+        .x(x)/*x轴比例尺*/
+        .y(y)/*y轴比例尺*/
+        .scaleExtent([1, 10])/*缩放范围*/
+        .center([width / 2, height / 2])/*定义缩放中心*/
+        .size([width, height])
+        .on("zoom", zoomed);
 
     //添加svg对象
     var svg = d3.select(candle)
         .append("svg")
         .attr("width", width)
         .attr("height", height);
+
+
+    /*定义zoom响应函数*/
+    function zoomed() {
+        svg.attr("transform",
+            "translate(" + zoom.translate() + ")" +
+            "scale(" + zoom.scale() + ")"
+        );
+    }
+
 
     var rectStep = (xScale.range()[1] - padding.left - padding.right) / csvData.length;
     var rectWidth = 0.6 * rectStep;
@@ -140,6 +141,8 @@ function plotCandle(cellId, csvData, beginIndex) {
         });
 
 
+    // svg.call(zoom);
+
     //控制x轴输出密度的数组
     var indexNeed = [];
     var density = 20;
@@ -168,7 +171,8 @@ function plotCandle(cellId, csvData, beginIndex) {
             var format = d3.time.format('%Y/%m/%d');
             return format(new Date(d));
         })
-        .orient("bottom");
+        .orient("bottom")
+        .tickSize(-height + padding.top + padding.bottom);
 
 
     //翻转y轴定义域
@@ -177,7 +181,9 @@ function plotCandle(cellId, csvData, beginIndex) {
     //y轴坐标
     var yAxis = d3.svg.axis()
         .scale(yScale)
-        .orient("left");
+        .orient("left")
+        // .ticks(5)
+        .tickSize(-width + padding.left + padding.right);
 
     //在svg元素中添加g元素，并放置x坐标轴
     svg.append("g")
@@ -219,8 +225,8 @@ function plotCandle(cellId, csvData, beginIndex) {
     /*******************************开、高、低、收的值***********************************/
     var openPrice = document.getElementById("openPrice");
     var highPrice = document.getElementById("highPrice");
-    var lowPrice = document.getElementById("lowPrice");
-    var closePRice = document.getElementById("closePrice");
+    // var lowPrice = document.getElementById("lowPrice");
+    // var closePRice = document.getElementById("closePrice");
 
 
     /*鼠标移动处理函数*/
@@ -231,33 +237,33 @@ function plotCandle(cellId, csvData, beginIndex) {
 
         /*根据鼠标移动改变横线的位置*/
         hLine.attr("x1", padding.left)
-            .attr("y1", mouseY)
+            .attr("y1", mouseY + padding.top)
             .attr("x2", width - padding.right)
-            .attr("y2", mouseY)
+            .attr("y2", mouseY + padding.top)
             .attr("stroke", "black")
             .attr("stroke-width", "1")
             .attr("stroke-dasharray", "3,3");
 
         /*根据鼠标移动改变竖线的位置*/
-        vLine.attr("x1", mouseX)
+        vLine.attr("x1", mouseX + padding.left)
             .attr("y1", height - padding.bottom)
-            .attr("x2", mouseX)
+            .attr("x2", mouseX + padding.left)
             .attr("y2", 0 + padding.top)
             .attr("stroke", "black")
             .attr("stroke-width", "1")
             .attr("stroke-dasharray", "3,3");
 
         /*动态修改开、高、低、收的值*/
-        openPrice.innerText = d3.mouse(this)[1];
-        highPrice.innerText = d3.mouse(this)[0];
-        lowPrice.innerText = d3.mouse(this)[1];
-        closePRice.innerText = d3.mouse(this)[0];
+        openPrice.innerText = d3.mouse(this)[0];
+        highPrice.innerText = d3.mouse(this)[1];
+        // lowPrice.innerText = d3.mouse(this)[1];
+        // closePRice.innerText = d3.mouse(this)[0];
 
 
         /*x轴动态游标*/
         /*******************************设置xValueCursor***********************************/
         /*左上角坐标*/
-        xValueCursor.style.left = mouseX + (svg[0][0].getBoundingClientRect().left) + "px";
+        xValueCursor.style.left = mouseX + padding.left + (svg[0][0].getBoundingClientRect().left) + "px";
         xValueCursor.style.top = svg[0][0].clientHeight - 25 + "px"
         /*内容*/
         xValueCursor.innerText = mouseX;
@@ -267,21 +273,40 @@ function plotCandle(cellId, csvData, beginIndex) {
         /*******************************设置yValueCursor***********************************/
         /*左上角坐标*/
         yValueCursor.style.left = (svg[0][0].getBoundingClientRect().left) + padding.left + "px";
-        yValueCursor.style.top = mouseY + "px";
+        yValueCursor.style.top = mouseY + padding.top + 4 + "px";
         /*内容*/
-        yValueCursor.innerText = (Math.round(yScale.invert(mouseY - padding.bottom - padding.top) * 100) / 100).toString();
+        yValueCursor.innerText = (Math.round(yScale.invert(mouseY) * 100) / 100).toString();
 
     };
 
+
     /*监听鼠标移动事件-d3方法*/
-    svg.on("mousemove", mouseMoveFunc)
+    svg.append("rect")
+        .attr("fill", "white")
+        .attr("opacity", "0.0")
+        .attr("width", width - padding.left - padding.right)
+        .attr("height", height - padding.top - padding.bottom)
+        .attr("transform", "translate(" + padding.left + "," + padding.top + ")")
+        .on("mousemove", mouseMoveFunc)
         .on("mouseover", function () {
+            /*显示交叉线*/
             crossLine.style("display", null);
+            xValueCursor.style.display = null;
+            yValueCursor.style.display = null;
             /*隐藏鼠标*/
             // this.style.cursor = "none";
         })
         .on("mouseout", function () {
+            /*关闭交叉线*/
             crossLine.style("display", "none");
+            xValueCursor.style.display = "none";
+            yValueCursor.style.display = "none";
+        })
+        .on("mousedown",function () {
+            this.style.cursor = "move"
+        })
+        .on("mouseup",function () {
+            this.style.cursor = "auto"
         });
 
 }
@@ -374,9 +399,9 @@ function plotVolume(svg, date, volumeData) {
  * date:横坐标日期数据
  * volume:纵坐标成交量数据
  * */
-function plotVolumeByID(cellID, date, volumeData, beginIndex) {
+function plotVolumeByID(cellID, sPP, volumeData, beginIndex) {
 
-    var date = date.slice(beginIndex);
+    var date = sPP.tDate.slice(beginIndex);
     var volumeData = volumeData.slice(beginIndex);
 
     var cell = document.getElementById(cellID);
@@ -389,9 +414,9 @@ function plotVolumeByID(cellID, date, volumeData, beginIndex) {
     }
 
 
-    var width = cell.offsetWidth;
+    var width = cell.clientWidth;
 
-    var height = cell.offsetHeight;
+    var height = cell.clientHeight;
 
     volume.style.width = width + 'px';
 
@@ -402,13 +427,10 @@ function plotVolumeByID(cellID, date, volumeData, beginIndex) {
     cell.appendChild(volume);
 
     /*padding尺寸*/
-    var padding = {top: 30, right: 70, bottom: 50, left: 70};
+    var padding = sPP.padding;
 
     //x轴坐标比例尺
-    var xScale = d3.scale.ordinal()
-    //      .domain(d3.range(date.length))
-        .domain(date)
-        .rangeBands([0, width - padding.left - padding.right], 0.2);
+    var xScale = sPP.xScale;
 
     //y轴坐标比例尺
     var yScale = d3.scale.linear()
@@ -458,6 +480,10 @@ function plotVolumeByID(cellID, date, volumeData, beginIndex) {
         //                .tickSize(20)
         //.tickValues(d3.permute(d3.range(date.length), indexNeed))//tickValues直接输出坐标轴标志，permute函数根据indexNeed数组来决定tData数组的输出
         .tickValues(d3.permute(date, indexNeed))//tickValues直接输出坐标轴标志，permute函数根据indexNeed数组来决定tData数组的输出
+        .tickFormat(function (d) {
+            var format = d3.time.format('%Y/%m/%d');
+            return format(new Date(d));
+        })
         .orient("bottom");
 
 
@@ -472,6 +498,7 @@ function plotVolumeByID(cellID, date, volumeData, beginIndex) {
 
     var yAxis = d3.svg.axis()
         .scale(yScale)
+        .ticks(5)
         .orient("left");
 
     svg.append("g")

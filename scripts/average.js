@@ -2,7 +2,7 @@
  * Created by fibiristor on 2018/3/7.
  */
 
-function nDaysAveragePath(cellID, csvData, nDays, lineColor, padding,beginIndex) {
+function nDaysAveragePath(cellID, csvData, nDays, lineColor, padding, beginIndex) {
 
     var csvData = csvData.slice(beginIndex);
 
@@ -43,11 +43,7 @@ function nDaysAveragePath(cellID, csvData, nDays, lineColor, padding,beginIndex)
     //y轴比例尺
     var yScale = d3.scale.linear()  //线性比例尺
         .domain([valueMin, valueMax])
-        .rangeRound([0, height - padding.top - padding.bottom]);
-
-    //翻转y轴定义域
-    yScale.range([height - padding.top - padding.bottom, 0]);
-
+        .rangeRound([height - padding.top - padding.bottom, 0]);
 
     //收盘N日平均值数组
     var avgCloseData = avgData(closeData, nDays);
@@ -74,7 +70,7 @@ function nDaysAveragePath(cellID, csvData, nDays, lineColor, padding,beginIndex)
 
     //nDays收盘均价路径生成器
     var nDaysAvgDataPathGen = d3.svg.line()
-        .interpolate("basis");
+        .interpolate("basis");/*插值方式：basis*/
 
     //在svg中添加N日收盘均价路径
     svg.append("path")

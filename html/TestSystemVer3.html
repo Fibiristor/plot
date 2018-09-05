@@ -55,38 +55,79 @@
 </div>
 <script type="text/javascript">
     window.onload = function () {
-        var padding = {top: 30, right: 70, bottom: 30, left: 70};
-        /*交易品种数据*/
-//        var csvData = getDataFromCSV("../data/bu0001.csv", 'text', false);
 
-        /*模拟数据*/
-        var sampleFile = "../data/candle.csv";
-        var lengthOfSimulateData = 1000;
-        var csvData = getSimulateData(sampleFile, lengthOfSimulateData);
+        /*交易品种数据*/
+        var csvData = getDataFromCSV("../data/candle.csv", 'text', false);
+
+//        /*模拟数据*/
+//        var sampleFile = "../data/candle.csv";
+//        var lengthOfSimulateData = 1000;
+//        var csvData = getSimulateData(sampleFile, lengthOfSimulateData);
 
         var divName = document.getElementById("singleCandle");
+        var padding = {top: 30, right: 70, bottom: 30, left: 70};
+
+        /*绘图公用参数*/
+        var sPP = getStaticPlotParam(divName, csvData, padding);
+
+        function getStaticPlotParam(divName, csvData, padding) {
+
+            var width = divName.clientWidth;
+            var height = divName.clientHeight;
+
+            /*时间*/
+            var tDate = csvData.map(function (d) {
+                return parseInt(new Date(d[0]).getTime());
+
+            });
+
+            /*最高价的最大值*/
+            var maxValue = d3.max(csvData, function (d) {
+                return d[2];
+            });
+
+            /*最低价的最小值*/
+            var minValue = d3.min(csvData, function (d) {
+                return d[3];
+            });
+
+            /*x轴比例尺*/
+            var xScale = d3.scale.ordinal()
+                    .domain(tDate)
+                    .rangeBands([0, width - padding.left - padding.right], 0.2);
+
+            /*y轴比例尺*/
+            var yScale = d3.scale.linear()
+                    .domain([minValue, maxValue])
+                    .range([0, height - padding.bottom - padding.top]);
 
 
-        /*日期数据*/
-        var tDate = [];
-        for (var i = 0; i < csvData.length; i++) {
-            tDate[i] = csvData[i][0];
+            var sPP = new StaticPlotParam(tDate, width, height, xScale, yScale, padding);
+
+            /*绘图公用参数对象*/
+            function StaticPlotParam(tDate, width, height, xScale, yScale, padding) {
+                this.tDate = tDate;
+                this.width = width;
+                this.height = height;
+                this.xScale = xScale;
+                this.yScale = yScale;
+                this.padding = padding;
+            }
+
+            return sPP;
         }
 
         /*volume数据*/
-        var volumeData = [];
-        //数组赋值
-        for (var i = 0; i < csvData.length; i++) {
-            volumeData.push(parseInt(csvData[i][5]));
-        }
-        /*绘制交易品种K线*/
-        plotCandle("singleCandle", csvData);
+        var volumeData = csvData.map(function (d) {
+            return parseInt(d[5]);
+        });
 
-        /*绘制网格*/
-        plotGrids("singleCandle", 10, 10);
+
+        /*绘制交易品种K线*/
+        plotCandle("singleCandle", csvData, sPP);
 
         /*绘制交易品种成交量*/
-        plotVolumeByID("singleVolume", tDate, volumeData);
+        plotVolumeByID("singleVolume", sPP, volumeData);
 
         /*绘制价格通道*/
         nDaysChannel("singleCandle", csvData, 20, "red", "green", "1px", padding);
@@ -107,31 +148,21 @@
 
         /*交易策略数据*/
         var dataOfChanelStrategy = nDaysChanelStrategy(csvData, inDays, outDays, balance);//通道突破策略
-        /*利润数据*/
+        /*每日浮动利润数据*/
         var profitData = dataOfChanelStrategy.profitData;
         document.getElementById("totalProfit").innerHTML = profitData[profitData.length - 1][1];
         var tradeData = dataOfChanelStrategy.tradeData;
 
         /*绘制利润曲线*/
         plotProfit("singleCandle", profitData, "red");
+
         /*绘制交易记录线*/
         plotTradeLine("singleCandle", csvData, dataOfChanelStrategy);
 
-        /**/
+        /*无日期数据的每日利润数组*/
         var profitDataWithoutDate = profitData.map(function (d) {
             return d[1];
         });
-
-        /*最大衰落*/
-        var maxDrawDown = maxFading(profitDataWithoutDate, balance);
-        console.info(maxDrawDown,maxDrawDown.iMin-maxDrawDown.iMax);
-
-//        console.info(maxFading(function () {
-//             var closeData = profitData.map(function (d) {
-//                 return d[1];
-//             });
-//            return closeData;
-//        }));
 
         /*缩放步长*/
         var step = 20;
@@ -166,9 +197,9 @@
             /*只有当偏移值变化时才重绘*/
             if (previousIndex != shiftNumber) {
                 /*重绘K线图*/
-                plotCandle("singleCandle", dataForTest, shiftNumber);
-                /*绘制网格*/
-                plotGrids("singleCandle", 10, 10);
+                plotCandle("singleCandle", dataForTest, sPP, shiftNumber);
+//                /*绘制网格*/
+//                plotGrids("singleCandle", 10, 10);
                 /*重绘成交量图*/
                 plotVolumeByID("singleVolume", tDate, volumeData, shiftNumber);
                 /*重绘通道线*/
@@ -184,7 +215,7 @@
                 /*重绘利润图*/
                 plotProfit("singleCandle", profitData, "red", shiftNumber);
                 /*重绘交易记录线*/
-                plotTradeLine("singleCandle", csvData, shiftNumber);
+                plotTradeLine("singleCandle", csvData, dataOfChanelStrategy, shiftNumber);
 
 
             }
@@ -193,85 +224,218 @@
         };
 
         /*注册事件监听器*/
-        divName.addEventListener("mousewheel", function () {
-            testFunc(csvData);
-        }, false);
+//        divName.addEventListener("mousewheel", function () {
+//            testFunc(csvData);
+//        }, false);
 
 
         //交易数据表格
         var tBody = document.getElementsByTagName("tbody")[0];
 
-        /*添加交易数据记录*/
-        for (var i = 0; i < tradeData.length; i++) {
-            var dataRow = getDataRow(i, tradeData[i]);
-            /*创建表格*/
-            tBody.appendChild(dataRow);
-            /*添加记录*/
+        addTradeRecordTable(tBody, tradeData);
+
+        function addTradeRecordTable(tBody, tradeData) {
+
+            /*添加交易数据记录*/
+            for (var i = 0; i < tradeData.length; i++) {
+
+                /*创建行记录*/
+                var dataRow = getDataRow(i, tradeData[i]);
+                /*添加行记录*/
+                tBody.appendChild(dataRow);
+            }
+
+            /*创建一条数据记录*/
+            function getDataRow(i, data) {
+                /*创建行*/
+                var row = document.createElement("tr");
+
+                /*交易序号*/
+                var idCell = document.createElement("td");
+                idCell.innerHTML = i + 1;
+                row.appendChild(idCell);
+
+                /*交易类型*/
+                var directionCell = document.createElement("td");
+                directionCell.innerHTML = data.direction;
+                row.appendChild(directionCell);
+
+                /*成交日期*/
+                var tradeDateCell = document.createElement("td");
+                tradeDateCell.innerHTML = data.tradeDate;
+                row.appendChild(tradeDateCell);
+
+                /*成交价格*/
+                var priceCell = document.createElement("td");
+                priceCell.innerHTML = data.price;
+                row.appendChild(priceCell);
+
+                /*交易数量*/
+                var amountCell = document.createElement("td");
+                var tradeAmount = data.amount;
+                amountCell.innerHTML = tradeAmount;
+                row.appendChild(amountCell);
+
+                /*交易编号*/
+                var codeCell = document.createElement("td");
+                codeCell.innerHTML = data.code;
+                row.appendChild(codeCell);
+
+
+                /*关联编号*/
+                var preCodeCell = document.createElement("td");
+                preCodeCell.innerHTML = data.preCode;
+                row.appendChild(preCodeCell);
+
+                /*持仓时间*/
+                var preCodeCell = document.createElement("td");
+                if (data.preCode != "") {
+                    /*查询字符串中第一个“-”的位置，据此截取时间*/
+                    var indexOfCode = data.code.indexOf("-");
+                    var indexOfPreCode = data.preCode.indexOf("-");
+                    /*计算两个时间之间的毫秒数差值*/
+                    var inTime = data.preCode.slice(0, indexOfPreCode);
+                    var outTime = data.code.slice(0, indexOfCode);
+                    var daysDiff = new Date(outTime).getTime() - new Date(inTime).getTime();
+                    /*转换两个时间之间相差的天数*/
+                    var daysKeep = Math.floor(daysDiff / (24 * 3600 * 1000));
+                }
+                preCodeCell.innerHTML = daysKeep != null ? daysKeep : "--";
+                row.appendChild(preCodeCell);
+
+
+                /*利润*/
+                var profitCell = document.createElement("td");
+                /*利润率*/
+                var profitPercentCell = document.createElement("td");
+
+                /*判断多头还是空头*/
+                if (data.direction.indexOf("empty") >= 0) {
+                    /*提取进场价格*/
+                    var indexArray = [];
+                    for (var i = 0; i < data.preCode.length; i++) {
+                        var obj = data.preCode.charAt(i);
+                        if (obj == "-") {
+                            indexArray.push(i);
+                        }
+                    }
+                    /*进场价格*/
+                    var inPrice = data.preCode.slice(indexArray[0] + 1, indexArray[1]);
+                    /*出场价格*/
+                    var outPrice = data.price;
+
+                    /*每笔利润*/
+                    var profitPer;
+                    /*交易方向*/
+                    var tradeDirection;
+                    if (data.direction.indexOf("long") >= 0) {
+                        /*多头平仓*/
+                        tradeDirection = "long";
+                        profitPer = Math.round(((outPrice - inPrice) * data.amount) * 100) / 100;
+                        profitCell.innerHTML = profitPer;
+                        profitPercentCell.innerHTML = Math.round((profitPer / inPrice) * 100) / 100;
+
+                    } else if (data.direction.indexOf("short") >= 0) {
+                        /*空头平仓*/
+                        tradeDirection = "short";
+                        profitPer = Math.round(((inPrice - outPrice) * data.amount) * 100) / 100;
+                        profitCell.innerHTML = profitPer;
+                        profitPercentCell.innerHTML = Math.round((profitPer / inPrice) * 100) / 100;
+                    }
+
+//            var tradeClosedPer = new tradesClosed(inTime, outTime, tradeAmount, tradeDirection, inPrice, outPrice);
+
+                }
+                row.appendChild(profitCell);
+                row.appendChild(profitPercentCell);
+
+
+                return row;
+            }
         }
 
-        /*创建一条数据记录*/
-        function getDataRow(i, data) {
-            /*创建行*/
-            var row = document.createElement("tr");
+        /*所有已平仓闭环交易*/
+        var closedTrades = getClosedTrade(tradeData);
+        /*已平仓交易总利润*/
+        var totalProfit = 0;
+        var tempP = 0;
+        /*亏损交易*/
+        var lostTrades = [];
+        /*盈利交易*/
+        var earnTrades = [];
 
-            /*交易序号*/
-            var idCell = document.createElement("td");
-            idCell.innerHTML = i + 1;
-            row.appendChild(idCell);
-
-            /*交易类型*/
-            var directionCell = document.createElement("td");
-            directionCell.innerHTML = data.direction;
-            row.appendChild(directionCell);
-
-            /*成交日期*/
-            var tradeDateCell = document.createElement("td");
-            tradeDateCell.innerHTML = data.tradeDate;
-            row.appendChild(tradeDateCell);
-
-            /*成交价格*/
-            var priceCell = document.createElement("td");
-            priceCell.innerHTML = data.price;
-            row.appendChild(priceCell);
-
-            /*交易数量*/
-            var amountCell = document.createElement("td");
-            amountCell.innerHTML = data.amount;
-            row.appendChild(amountCell);
-
-            /*交易编号*/
-            var codeCell = document.createElement("td");
-            codeCell.innerHTML = data.code;
-            row.appendChild(codeCell);
+        closedTrades.forEach(function (x) {
+            tempP = parseFloat(x.tradeDirection == "long" ? (x.outPrice - x.inPrice) * x.tradeAmount : (x.inPrice - x.outPrice) * x.tradeAmount);
+            totalProfit += tempP;
+            if (tempP >= 0) {
+                earnTrades.push(tempP);
+            } else {
+                lostTrades.push(tempP);
+            }
+        });
 
 
-            /*关联编号*/
-            var preCodeCell = document.createElement("td");
-            preCodeCell.innerHTML = data.preCode;
-            row.appendChild(preCodeCell);
+        console.info("已平仓交易总利润: " + totalProfit);
 
-            /*持仓时间*/
-            var preCodeCell = document.createElement("td");
-            if (data.preCode != "") {
+        /*年化收益*/
+        var AnnualizedReturns = Math.pow((((profitData[profitData.length - 1][1]) + balance) / balance), 250 / csvData.length) - 1;
+        console.info("年化收益率: " + Math.round(AnnualizedReturns * 10000) / 100 + "%");
+
+        /*总交易数量*/
+        console.info("总交易数量: " + closedTrades.length);
+        /*亏损交易数量*/
+        console.info("亏损交易数量: " + lostTrades.length);
+        /*亏损交易总额*/
+        var lostTradesBalance = lostTrades.reduce(function (pre, cur) {
+            return pre + cur;
+        });
+        console.info("亏损交易总额: " + lostTradesBalance);
+        /*盈利交易数量*/
+        console.info("盈利交易数量: " + earnTrades.length);
+        /*盈利交易总额*/
+        var earnTradesBalance = earnTrades.reduce(function (pre, cur) {
+            return pre + cur;
+        });
+        console.info("盈利交易总额: " + earnTradesBalance);
+        /*盈利因子*/
+        var earnFactor = Math.abs(Math.round((earnTradesBalance / lostTradesBalance) * 100) / 100);
+        console.info("盈利因子: " + earnFactor)
+        /*胜率*/
+        console.info("胜率: " + Math.round((earnTrades.length / closedTrades.length) * 100) / 100);
+
+        /*最大衰落*/
+        var maxDrawDown = maxFading(profitDataWithoutDate, balance);
+        console.info(maxDrawDown, maxDrawDown.iMin - maxDrawDown.iMax);
+
+    };
+
+
+    /*获取已平仓闭环交易*/
+    function getClosedTrade(tradeData) {
+
+        var closedTrades = [];
+
+        for (var j = 0; j < tradeData.length; j++) {
+            var data = tradeData[j];
+
+            /*平仓情况下*/
+            if (data.direction.indexOf("empty") >= 0) {
+
+                /*时间*/
+//            if (data.preCode != "") {
                 /*查询字符串中第一个“-”的位置，据此截取时间*/
                 var indexOfCode = data.code.indexOf("-");
                 var indexOfPreCode = data.preCode.indexOf("-");
-                /*计算两个时间之间的毫秒数差值*/
-                var daysDiff = new Date(data.code.slice(0, indexOfCode)).getTime() - new Date(data.preCode.slice(0, indexOfPreCode)).getTime();
-                /*转换两个时间之间相差的天数*/
-                var daysKeep = Math.floor(daysDiff / (24 * 3600 * 1000));
-            }
-            preCodeCell.innerHTML = daysKeep != null ? daysKeep : "--";
-            row.appendChild(preCodeCell);
 
+                /*进场时间*/
+                var inTime = data.preCode.slice(0, indexOfPreCode);
+                /*出场时间*/
+                var outTime = data.code.slice(0, indexOfCode);
+//            }
 
-            /*利润*/
-            var profitCell = document.createElement("td");
-            /*利润率*/
-            var profitPercentCell = document.createElement("td");
+                /*交易数量*/
+                var tradeAmount = data.amount;
 
-            /*判断多头还是空头*/
-            if (data.direction.indexOf("empty") >= 0) {
                 /*提取进场价格*/
                 var indexArray = [];
                 for (var i = 0; i < data.preCode.length; i++) {
@@ -280,31 +444,47 @@
                         indexArray.push(i);
                     }
                 }
-                var priceIn = data.preCode.slice(indexArray[0] + 1, indexArray[1]);
+                /*进场价格*/
+                var inPrice = data.preCode.slice(indexArray[0] + 1, indexArray[1]);
+                /*出场价格*/
+                var outPrice = data.price;
 
+                /*交易方向*/
+                var tradeDirection;
                 if (data.direction.indexOf("long") >= 0) {
                     /*多头平仓*/
-                    var profitPer = (data.price - priceIn) * data.amount;
-                    profitCell.innerHTML = profitPer;
-                    profitPercentCell.innerHTML = Math.round((profitPer / priceIn) * 100) / 100;
+                    tradeDirection = "long";
 
                 } else if (data.direction.indexOf("short") >= 0) {
                     /*空头平仓*/
-                    var profitPer = (priceIn - data.price) * data.amount;
-                    profitCell.innerHTML = profitPer;
-                    profitPercentCell.innerHTML = Math.round((profitPer / priceIn) * 100) / 100;
+                    tradeDirection = "short";
                 }
 
+                var tradeClosedPer = new tradesClosed(inTime, outTime, tradeAmount, tradeDirection, inPrice, outPrice);
+
+                closedTrades.push(tradeClosedPer);
             }
-            row.appendChild(profitCell);
-            row.appendChild(profitPercentCell);
-
-            return row;
         }
-
+        return closedTrades;
 
     }
 
+    /*已平仓闭环交易对象*/
+    function tradesClosed(inTime, outTime, tradeAmount, tradeDirection, inPrice, outPrice) {
+        /*进场时间*/
+        this.inTime = inTime;
+        /*出场时间*/
+        this.outTime = outTime;
+        /*交易数量*/
+        this.tradeAmount = tradeAmount;
+        /*交易类型*/
+        this.tradeDirection = tradeDirection;
+        /*进场价格*/
+        this.inPrice = inPrice;
+        /*出场价格*/
+        this.outPrice = outPrice;
+
+    }
 
     /*利润曲线显示与否*/
     function toggleProfitPath() {

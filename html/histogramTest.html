@@ -11,7 +11,7 @@
 
 </head>
 <body>
-<div id="histogram" style="width: 500px; height: 150px"></div>
+<div id="histogram" style="width: 1200px; height: 500px; border:1px solid blue;"></div>
 <script type="text/javascript">
     var fileName = "../data/au0001.csv";
     var csvData = getDataFromCSV(fileName, "text", false);
@@ -20,9 +20,9 @@
     var balance = 500000;
     var tradeData = nDaysChanelStrategy(csvData, inDays, outDays, balance).tradeData;
 
-    plotHistogram("histogram",tradeData, 50);
+    plotHistogram("histogram", tradeData, 50);
 
-    function plotHistogram(cellId,tradeData, binsNum) {
+    function plotHistogram(cellId, tradeData, binsNum) {
         var profitPerDay = getPerTradeProfit(tradeData);
 
         /*直方图布局*/
@@ -41,7 +41,20 @@
                 .attr("width", width)
                 .attr("height", height);
 
-        xTicks = hisData.map(function (d) {
+        var zoom = d3.behavior.zoom()
+                .scaleExtent([-5, 10])
+                .on("zoom", zoomed);
+
+        /*添加一个矩形，专门用于接收缩放消息*/
+        svg.append("rect")
+                .attr("class", "overlay")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", width)
+                .attr("height", height)
+                .call(zoom);
+
+        var xTicks = hisData.map(function (d) {
             return d.x;
         });
         var xScale = d3.scale.ordinal()
@@ -54,10 +67,16 @@
                 .orient("bottom")
                 .tickFormat(d3.format(".0f"));
 
-        svg.append("g")
+        var axisBottom = svg.append("g")
                 .attr("class", "axis")
                 .attr("transform", "translate(" + 0 + "," + (height - padding.bottom) + ")")
                 .call(xAxis);
+//                .selectAll("text")
+////                .attr("x",0)
+////                .attr("y",9)
+////                .attr("dx", "12em")
+////                .attr("transform", "translate(" + 0 + "," + 10 + ")");
+//                .attr("transform", "rotate(-90)");
 
         var yScale = d3.scale.linear()
                 .domain([d3.min(hisData, function (d) {
@@ -92,11 +111,22 @@
                             .style("fill", "#ff4a68");
 //                    console.info(d);
                 })
-                .on("mouseleave",function () {
+                .on("mouseleave", function () {
 
                     d3.select(this).style("fill", "steelblue");
 //                    d3.select(this).attr("opacity", 1);
                 });
+
+
+        function zoomed() {
+            gRect.attr("transform", "translate(" + d3.event.translate + ")" +
+                    "scale(" + d3.event.scale + ")");
+            axisBottom.attr("class", "axis")
+                    .attr("transform", "translate(" + [d3.event.translate[0],d3.event.translate[1]] + ")" +
+                    "scale(" + d3.event.scale + ")")
+                    ;
+
+        }
 
     }
 

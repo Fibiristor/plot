@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DrageTest</title>
+    <script src="../scripts/d3.js"></script>
+    <style>
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+
+        .circle {
+            fill: steelblue;
+            stroke-width: 2px;
+            stroke: black;
+        }
+    </style>
+</head>
+<body>
+<svg width="900" height="500" style="border:2px solid #e8e8e8;" ;></svg>
+<script type="text/javascript">
+    var svg = d3.select("svg");
+    var width = svg.attr("width");
+    var height = svg.attr("height");
+
+    var circles = [{cx: 150, cy: 200, r: 30},
+        {cx: 220, cy: 200, r: 30},
+        {cx: 150, cy: 270, r: 30},
+        {cx: 220, cy: 270, r: 30}];
+
+    var x = d3.scale.linear()
+            .domain([0, width])
+            .range([0, width]);
+
+    var y = d3.scale.linear()
+            .domain([0, height])
+            .range([0, height]);
+
+    var g = svg.append("g")
+            .selectAll("circle")
+            .data(circles)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) {
+                return d.cx;
+            })
+            .attr("cy", function (d) {
+                return d.cy;
+            })
+            .attr("r", function (d) {
+                return d.r;
+            })
+            .attr("class", "circle");
+
+    var zoom = d3.behavior.zoom()
+            .x(x)
+            .y(y)
+            .scaleExtent([1, 10])
+            .on("zoom", function () {
+                g.attr("cx", function (d) {
+                    return d.cx;
+                })
+                        .attr("cy", function (d) {
+                            return d.cy;
+                        })
+                        .attr("r", function (d) {
+                            return d.r;
+                        })
+                        .attr("class", "circle");
+                g.attr("transform", "translate(" + d3.event.translate + ")" +
+                        "scale(" + d3.event.scale + ")");
+            });
+
+
+    svg.append("rect")
+            .attr("class", "overlay")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            .call(zoom);
+
+
+</script>
+
+</body>
+</html>

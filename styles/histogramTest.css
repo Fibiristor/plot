@@ -1,0 +1,18 @@
+.axis path,
+.axis line{
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+.axis{
+    font-size: 8px;
+}
+.rect {
+    fill: steelblue;
+    border: 2px solid red;
+
+}
+.overlay {
+    fill: none;
+    pointer-events: all;
+}

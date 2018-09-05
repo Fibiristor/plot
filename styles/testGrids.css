@@ -1,0 +1,13 @@
+* {
+    margin: 0;
+    padding: 0;
+
+}
+
+#svgDiv path{
+    fill: none;
+    stroke: black;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+

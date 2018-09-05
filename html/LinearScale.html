@@ -8,12 +8,6 @@
     <script src="../scripts/d3-v5.js" charset="utf-8"></script><!--d3绘图库-->
     <!--<script src="https://d3js.org/d3.v5.min.js"></script>-->
     <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
-    <!--<script src="../scripts/plotUtil.js" charset="UTF-8"></script>&lt;!&ndash;绘图库&ndash;&gt;-->
-    <!--<script src="../scripts/nDaysChanelStrategy.js" charset="utf-8"></script>&lt;!&ndash;策略计算库&ndash;&gt;-->
-    <!--<script src="../scripts/plotTradeLine.js" charset="UTF-8"></script>&lt;!&ndash;绘制交易线&ndash;&gt;-->
-    <!--<script src="../scripts/GetSimulateData.js" charset="utf-8"></script>&lt;!&ndash;获取模拟数据&ndash;&gt;-->
-    <!--<script src="../scripts/average.js" charset="utf-8"></script>&lt;!&ndash;均线&ndash;&gt;-->
-    <!--<script src="../scripts/Grids.js" charset="UTF-8"></script>&lt;!&ndash;网格线&ndash;&gt;-->
 </head>
 <body>
 <span id="dateValue" style="position: absolute;"></span>
@@ -30,11 +24,23 @@
 
     var dateFormat = d3.timeFormat("%Y/%m/%d");
 
+    var zoom = d3.zoom()
+            .scaleExtent([1, 10])
+            .on("zoom", zoomed);
+
     /*在body中添加SVG元素*/
     var svg = d3.select("body")
             .append("svg")
             .attr("width", width)
-            .attr("height", height);
+            .attr("height", height)
+            .call(zoom);
+
+    function zoomed() {
+        svg.attr("transform",
+                "translate(" + zoom.translate() + ")" +
+                "scale(" + zoom.scale() + ")"
+        );
+    }
 
 
     /*文件名称*/
@@ -65,8 +71,10 @@
         close[i] = csvData[i][4];
     }
 
+
+
     plotLine(date, close, padding);
-//    plotCandle(date, csvData, padding);
+    //    plotCandle(date, csvData, padding);
 
     function plotLine(date, close, padding) {
 
@@ -107,7 +115,7 @@
 
         /*x轴坐标*/
         var xAxis = d3.axisBottom(xScale)
-//                .tickValues(date)
+        //                .tickValues(date)
                 .tickFormat(function (d) {
                     return dateFormat(d);
                 });
@@ -141,6 +149,7 @@
 
                     document.getElementById("dateValue").innerText = dateFormat(xScale.invert(mouseX)) + "---" + Math.round(yScale.invert(mouseY));
                 });
+
     }
 
     function plotCandle(date, csvData, padding) {
@@ -255,6 +264,9 @@
                     document.getElementById("dateValue").innerText = dateFormat(xScale.invert(mouseX)) + "---" + Math.round(yScale.invert(mouseY));
                 });
     }
+
+
+
 
 </script>
 

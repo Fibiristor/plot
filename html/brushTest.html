@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>BrushTest</title>
+    <script src="../scripts/d3.js"></script>
+
+</head>
+<body>
+<script>
+    var width = 500;
+    var height = 500;
+    var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+    svg.append("circle")
+            .attr("cx", 100)
+            .attr("cy", 100)
+            .attr("r", 30)
+            .style("fill", "steelblue");
+
+    svg.append("rect")
+            .attr("x", 150)
+            .attr("y", 70)
+            .attr("width", 70)
+            .attr("height", 60)
+            .style("fill", "steelblue");
+
+    var xScale = d3.scale.linear()
+            .domain([0, width])
+            .range([0, width]);
+
+    var yScale = d3.scale.linear()
+            .domain([0, height])
+            .range([0, height]);
+
+    var brush = d3.svg.brush()
+            .x(xScale)
+            .y(yScale)
+            .extent([0, 0], [100, 100])
+            .on("brush", brushed);
+
+    svg.append("g")
+            .call(brush)
+            .selectAll("rect")
+            .style("fill-opacity", 0.3);
+
+    function brushed() {
+      var extent = brush.extent();
+        console.info(extent[0][0]);
+        console.info(extent[0][1]);
+        console.info(extent[1][0]);
+        console.info(extent[1][1]);
+    }
+</script>
+</body>
+</html>
