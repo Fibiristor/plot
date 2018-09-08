@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TestSystem_forZoom</title>
+    <link rel="stylesheet" href="../styles/TestSystem_forZoom.css" type="text/css"/><!--样式-->
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图库-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="utf-8"></script><!--策略计算库-->
+    <script src="../scripts/GetSimulateData.js" charset="utf-8"></script><!--获取模拟数据-->
+</head>
+<body>
+
+<div id="single">
+    <div id="singleParamSet">
+        <input type="checkbox">K线</input>
+        <input type="checkbox">均&nbsp;线</input>
+        <input type="checkbox" onchange="toggleProfitPath()">通道线</input>
+        <input type="checkbox">成交量</input>
+    </div>
+    <div id="singleProfit">
+        <div id="detail">利润：<span id="totalProfit"></span>开：<span id="openPrice"></span>高：<span id="highPrice"></span>低：<span
+                id="lowPrice"></span>收：<span id="closePrice"></span><span id="yValue"
+                                                                          style="background-color: #333333; color: white;">hello</span>
+            <span id="xValue" style="background-color: #333333; color: white;"></span>
+        </div>
+        <div id="singleCandle"></div><!--k线-->
+    </div>
+</div>
+<script type="text/javascript">
+
+
+    window.onload = function () {
+
+//      主函数在此处统一设置一个“svg”元素，然后将此“svg”传递给各个绘图子函数，各个绘图子函数将所绘制图形包含在一个g元素中，并设置该g元素的class属性，
+//      将class属性返回给主函数中的调用者。在zoom消息处理函数中，调用
+//
+
+
+        /*据观察，描边值如果不变化web容器不会更新其值，其显示结果就会同步放大，解决方案：随着scale的变化，让描边宽度一直处于变化中，但始终小于1*/
+        function zoomFunction() {
+//            svg.attr("transform", "translate(" + zoom.translate() + ")" + "scale(" +zoom.scale()+")");
+//            svg.select("circle.circle-object")
+//                    .attr("stroke-width",1/zoom.scale()+"px");
+            svg.select(".x.axis").call(xAxis);
+//            svg.select(".y.axis").call(yAxis);
+
+//            console.info(svg.select(".x.axis"));
+//            svg.select(".y.axis").call(yAxis);
+
+            svg.select("path.path_high")
+                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px")
+                    .attr("transform", "translate(" + zoom.translate() + ")" + "scale(" + zoom.scale() + ")");
+            svg.select("path.path_low")
+                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px");
+            svg.select("path.path_avg")
+                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px");
+            svg.selectAll("line")
+                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px");
+//            svg.selectAll("rect")
+//                    .attr("stroke-width",Math.round((1/zoom.scale()*100))/100+"px");
+        };
+
+        /*交易品种数据*/
+        var csvData = getDataFromCSV("../data/candle.csv", 'text', false);
+
+        var padding = {top: 30, right: 70, bottom: 30, left: 70};
+
+        var divName = document.getElementById("singleCandle");
+        /*获取绘图公用参数*/
+        var sPP = getStaticPlotParam(divName, csvData, padding);
+        var width = sPP.width;
+        var height = sPP.height;
+
+        /*x轴比例尺*/
+        var x = d3.scale.linear()/*线性比例尺*/
+                .domain([-width / 2, width / 2])/*输入域*/
+                .range([0, width]);
+        /*值域*/
+
+        /*y轴比例尺*/
+        var y = d3.scale.linear()/*线性比例尺*/
+                .domain([-height / 2, height / 2])/*输入域*/
+                .range([height, 0]);
+        /*值域*/
+
+        var zoom = d3.behavior.zoom()
+                .x(x)
+                .y(y)
+                .scaleExtent([1, 10])
+                .on("zoom", zoomFunction);
+
+        var svg = d3.select(divName)
+                .append("svg")
+                .attr("width", 1400)
+                .attr("height", 580)
+                .call(zoom)
+                .append("g");
+
+
+
+        /*绘制坐标轴*/
+        var axisObject = plotAxis(svg, sPP);
+        var xAxis = (axisObject.xAxis);
+        var yAxis = (axisObject.yAxis);
+
+
+        /*绘制交易品种K线*/
+        plotCandleZoomable("singleCandle", csvData, sPP);
+
+        /*绘制价格通道*/
+        nDaysChannel("singleCandle", sPP, csvData, 20, "red", "green", "1px");
+
+        /*绘制收盘价均线*/
+        nDaysAveragePath("singleCandle", sPP, csvData, 60, "blue");
+
+    };
+
+    /*绘图公用参数*/
+    function getStaticPlotParam(divName, csvData, padding) {
+
+        var width = divName.clientWidth;
+        var height = divName.clientHeight;
+
+        /*时间*/
+        var tDate = csvData.map(function (d) {
+            return parseInt(new Date(d[0]).getTime());
+
+        });
+
+        /*最高价的最大值*/
+        var maxValue = d3.max(csvData, function (d) {
+            return d[2];
+        });
+
+        /*最低价的最小值*/
+        var minValue = d3.min(csvData, function (d) {
+            return d[3];
+        });
+
+        /*x轴比例尺*/
+        var xScale = d3.scale.ordinal()
+                .domain(tDate)
+                .rangeBands([0, width - padding.left - padding.right], 0.2);
+
+        /*y轴比例尺*/
+        var yScale = d3.scale.linear()
+                .domain([minValue, maxValue])
+                .range([0, height - padding.bottom - padding.top]);
+
+
+        var sPP = new StaticPlotParam(tDate, width, height, xScale, yScale, padding);
+
+        /*绘图公用参数对象*/
+        function StaticPlotParam(tDate, width, height, xScale, yScale, padding) {
+            this.tDate = tDate;
+            this.width = width;
+            this.height = height;
+            this.xScale = xScale;
+            this.yScale = yScale;
+            this.padding = padding;
+        }
+
+        return sPP;
+    }
+
+
+</script>
+</body>
+</html>
