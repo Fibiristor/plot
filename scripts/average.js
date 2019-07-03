@@ -1,21 +1,14 @@
-/**
- * Created by fibiristor on 2018/3/7.
- */
-
-function nDaysAveragePath(cellID, csvData, nDays, lineColor, padding, beginIndex) {
+function nDaysAveragePath(cellID, sPP, csvData, nDays, lineColor, beginIndex) {
 
     var csvData = csvData.slice(beginIndex);
 
     var svgCell = document.getElementById(cellID).firstElementChild.firstChild;
     var svg = d3.select(svgCell);
-    var width = svgCell.clientWidth;
-    var height = svgCell.clientHeight;
 
-    //从csvData中提取日期数据数组
-    var tDate = [];
-    for (var i = 0; i < csvData.length; i++) {
-        tDate[i] = csvData[i][0];
-    }
+    var width = sPP.width;
+    var padding = sPP.padding;
+
+    var tDate = sPP.tDate;
 
     //从csvData中提取收盘价数组
     var closeData = [];
@@ -23,27 +16,8 @@ function nDaysAveragePath(cellID, csvData, nDays, lineColor, padding, beginIndex
         closeData[i] = csvData[i][4];
     }
 
-    //获取每日最高价中的最大值
-    var valueMax = d3.max(csvData, function (d) {
-        return d[2];
-    });
-
-
-    //获取每日最低价中的最小值
-    var valueMin = d3.min(csvData, function (d) {
-        return d[3];
-    });
-
-
-    //x轴比例尺(日期)
-    var xScale = d3.scale.ordinal()  //序数比例尺
-        .domain(tDate)
-        .rangeBands([0, width - padding.left - padding.right], 0.2);
-
-    //y轴比例尺
-    var yScale = d3.scale.linear()  //线性比例尺
-        .domain([valueMin, valueMax])
-        .rangeRound([height - padding.top - padding.bottom, 0]);
+    var xScale = sPP.xScale;
+    var yScale = sPP.yScale;
 
     //收盘N日平均值数组
     var avgCloseData = avgData(closeData, nDays);
@@ -70,7 +44,8 @@ function nDaysAveragePath(cellID, csvData, nDays, lineColor, padding, beginIndex
 
     //nDays收盘均价路径生成器
     var nDaysAvgDataPathGen = d3.svg.line()
-        .interpolate("basis");/*插值方式：basis*/
+        .interpolate("basis");
+    /*插值方式：basis*/
 
     //在svg中添加N日收盘均价路径
     svg.append("path")

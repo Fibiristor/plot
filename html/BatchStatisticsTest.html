@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../scripts/jquery.js" charset="UTF-8"></script><!--jquery库-->
+    <script src="../scripts/d3.js" charset="utf-8"></script><!--d3绘图库-->
+    <script src="../scripts/calculate.js" charset="UTF-8"></script><!--计算库-->
+    <script src="../scripts/plotUtil.js" charset="UTF-8"></script><!--绘图库-->
+    <script src="../scripts/nDaysChanelStrategy.js" charset="utf-8"></script><!--策略计算库-->
+    <script src="../scripts/GetSimulateData.js" charset="utf-8"></script><!--获取模拟数据-->
+</head>
+<body>
+<script>
+
+    var balanceArray = [100000, 200000, 300000, 400000, 500000, 600000];
+    var inDayArray = [10, 20, 30, 40, 50, 60];
+    var outDayArray = [5, 10, 15, 20, 25, 30];
+    /*实际数据*/
+    var csvData = getDataFromCSV("../data/candle.csv", 'text', false);
+
+    for (var i = 0; i < inDayArray.length; i++) {
+
+        for (var j = 0; i < outDayArray.length; j++) {
+
+            if (outDayArray[j] < inDayArray[i]) {
+
+                /*定义策略参数*/
+                var inDays = inDayArray[i];            //突破天数
+                var outDays = outDayArray[j];           //出场天数
+                var balance = balanceArray[4];       //初始资金
+
+                /*交易策略数据*/
+                var dataOfChanelStrategy = nDaysChanelStrategy(csvData, inDays, outDays, balance);//通道突破策略
+
+                /*每日浮动利润数据*/
+                var profitData = dataOfChanelStrategy.profitData;
+
+                /*交易数据*/
+                var tradeData = dataOfChanelStrategy.tradeData;
+
+                /*获取统计数据*/
+                var statistics = getStatistics(tradeData, profitData, balance, csvData);
+
+                console.info("InDays:" + inDays + " " + "OutDays:" + outDays + " " + statistics[0].TotalProfit + "  MD  " + statistics[9].MaxDrawDown);
+            }else {
+                break;
+            }
+        }
+    }
+
+    /*获取已平仓闭环交易*/
+    function getClosedTrade(tradeData) {
+
+        var closedTrades = [];
+
+        for (var j = 0; j < tradeData.length; j++) {
+            var data = tradeData[j];
+
+            /*平仓情况下*/
+            if (data.direction.indexOf("empty") >= 0) {
+
+                /*时间*/
+                /*查询字符串中第一个“-”的位置，据此截取时间*/
+                var indexOfCode = data.code.indexOf("-");
+                var indexOfPreCode = data.preCode.indexOf("-");
+
+                /*进场时间*/
+                var inTime = data.preCode.slice(0, indexOfPreCode);
+                /*出场时间*/
+                var outTime = data.code.slice(0, indexOfCode);
+
+                /*交易数量*/
+                var tradeAmount = data.amount;
+
+                /*提取进场价格*/
+                var indexArray = [];
+                for (var i = 0; i < data.preCode.length; i++) {
+                    var obj = data.preCode.charAt(i);
+                    if (obj == "-") {
+                        indexArray.push(i);
+                    }
+                }
+                /*进场价格*/
+                var inPrice = data.preCode.slice(indexArray[0] + 1, indexArray[1]);
+                /*出场价格*/
+                var outPrice = data.price;
+
+                /*交易方向*/
+                var tradeDirection;
+                if (data.direction.indexOf("long") >= 0) {
+                    /*多头平仓*/
+                    tradeDirection = "long";
+
+                } else if (data.direction.indexOf("short") >= 0) {
+                    /*空头平仓*/
+                    tradeDirection = "short";
+                }
+
+                var tradeClosedPer = new tradesClosed(inTime, outTime, tradeAmount, tradeDirection, inPrice, outPrice);
+
+                closedTrades.push(tradeClosedPer);
+            }
+        }
+        return closedTrades;
+
+        /*已平仓闭环交易对象*/
+        function tradesClosed(inTime, outTime, tradeAmount, tradeDirection, inPrice, outPrice) {
+            /*进场时间*/
+            this.inTime = inTime;
+            /*出场时间*/
+            this.outTime = outTime;
+            /*交易数量*/
+            this.tradeAmount = tradeAmount;
+            /*交易类型*/
+            this.tradeDirection = tradeDirection;
+            /*进场价格*/
+            this.inPrice = inPrice;
+            /*出场价格*/
+            this.outPrice = outPrice;
+
+        }
+    }
+
+    /*统计数据*/
+    function getStatistics(tradeData, profitData, balance, csvData) {
+        /*所有已平仓闭环交易*/
+        var closedTrades = getClosedTrade(tradeData);
+        /*已平仓交易总利润*/
+        var totalProfit = 0;
+        var tempP = 0;
+        /*亏损交易*/
+        var lostTrades = [];
+        /*盈利交易*/
+        var earnTrades = [];
+
+        /*遍历closedTrades,得到总利润、盈利数组、亏损数组*/
+        closedTrades.forEach(function (x) {
+            tempP = parseFloat(x.tradeDirection == "long" ? (x.outPrice - x.inPrice) * x.tradeAmount : (x.inPrice - x.outPrice) * x.tradeAmount);
+            /*总利润*/
+            totalProfit += tempP;
+            if (tempP >= 0) {
+                /*盈利*/
+                earnTrades.push(tempP);
+            } else {
+                /*亏损*/
+                lostTrades.push(tempP);
+            }
+        });
+
+        /*统计数据数组*/
+        var statistics = [];
+
+        /*已平仓交易总利润*/
+        statistics.push({"TotalProfit": totalProfit});
+
+        /*年化收益*/
+        var AnnualizedReturns = Math.pow((((profitData[profitData.length - 1][1]) + balance) / balance), 250 / csvData.length) - 1;
+        AnnualizedReturns = Math.round(AnnualizedReturns * 10000) / 100 + "%";
+        statistics.push({"AnnReturns": AnnualizedReturns});
+
+        /*总交易数量*/
+        var totalTradesAmount = closedTrades.length;
+        statistics.push({"TotalTrades": totalTradesAmount});
+
+        /*亏损交易数量*/
+        var lostTradesAmount = lostTrades.length;
+        statistics.push({"LostTrades": lostTradesAmount})
+
+        /*亏损交易总额*/
+        var lostTradesBalance = lostTrades.reduce(function (pre, cur) {
+            return pre + cur;
+        });
+        statistics.push({"Lost_Balance": lostTradesBalance});
+
+        /*盈利交易数量*/
+        var earnTradesAmount = earnTrades.length;
+        statistics.push({"EarnTrades": earnTradesAmount});
+
+        /*盈利交易总额*/
+        var earnTradesBalance = earnTrades.reduce(function (pre, cur) {
+            return pre + cur;
+        });
+        statistics.push({"Earn_Balance": earnTradesBalance});
+
+        /*盈利因子*/
+        var earnFactor = Math.abs(Math.round((earnTradesBalance / lostTradesBalance) * 100) / 100);
+        statistics.push({"EarnFactor": earnFactor});
+
+        /*胜率*/
+        var winRate = Math.round((earnTrades.length / closedTrades.length) * 100) / 100
+        statistics.push({"WinRate": winRate});
+
+        /*无日期数据的每日利润数组,用来计算最大衰落*/
+        var profitDataWithoutDate = profitData.map(function (d) {
+            return d[1];
+        });
+
+        /*最大衰落*/
+        var maxDrawDown = maxFading(profitDataWithoutDate, balance).percentDown;
+        statistics.push({"MaxDrawDown": maxDrawDown});
+
+        return statistics;
+    }
+</script>
+
+</body>
+</html>

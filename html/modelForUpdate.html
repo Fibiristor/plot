@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Model For Update</title>
+    <script src="../scripts/d3.js"></script>
+    <style>
+        rect {
+            fill: steelblue;
+            /*stroke: green;*/
+            /*stroke-width: 3px;*/
+        }
+
+        text {
+            fill: black;
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: .3em .5em;
+            background-image: linear-gradient(#ddd, #bbb);
+            border: 1px solid rgba(0, 0, 0, .2);
+            border-radius: .3em;
+            box-shadow: 0 1px white inset;
+            text-align: center;
+            text-shadow: 0 1px 1px black;
+            color: white;
+            font-weight: bold;
+
+        }
+    </style>
+</head>
+<body>
+<div>
+    <botton class="btn" type="button" onclick="mysort()">排序</botton>
+    <botton class="btn" type="button" onclick="myadd()">增加数据</botton>
+    <botton class="btn" type="button" onclick="myminu()">减少数据</botton>
+</div>
+<script>
+    var dataset = [50, 43, 120, 87, 99, 167, 142, 90, 43, 75];
+
+    var width = 800;
+    var height = 400;
+    var padding = {top: 20, right: 20, bottom: 20, left: 20};
+    var rectStep = 35;
+    var rectWidth = 30;
+
+    var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+    svg.append("g")
+            .attr("class", "myrect")
+            .attr("id", "rect")
+            .selectAll("myrects")
+            .data(dataset)
+            .enter()
+//            .attr("class","eachRect")
+            .append("rect")
+            .attr("x", function (d, i) {
+                return padding.left + i * rectStep;
+            })
+            .attr("y", function (d) {
+                return height - padding.bottom - d;
+
+            })
+            .attr("width", rectWidth)
+            .attr("height", function (d) {
+                return d;
+            });
+
+    svg.append("g")
+            .attr("class", "mytext")
+            .attr("id", "text")
+            .selectAll("mytexts")
+            .data(dataset)
+            .enter()
+            .append("text")
+            .attr("x", function (d, i) {
+                return padding.left + i * rectStep;
+            })
+            .attr("y", function (d) {
+                return height - padding.bottom - d;
+            })
+            .attr("text-anchor", "middle")
+            .attr("dx", rectWidth / 2)
+//            .attr("dy", "-1em")
+            .text(function (d) {
+                return d;
+            });
+
+    function mysort() {
+        dataset.sort(d3.ascending);
+        draw();
+    }
+    ;
+
+    function myadd() {
+        dataset.push(Math.floor(Math.random() * 100));
+        draw();
+
+    }
+
+    function myminu() {
+        dataset.pop();
+        draw();
+    }
+
+    function draw() {
+//                矩形部分
+        /*update部分*/
+        var updateRect = svg.selectAll("rect")
+                .data(dataset);
+        console.info(updateRect);
+        updateRect.attr("x", function (d, i) {
+            return padding.left + i * rectStep;
+        })
+                .attr("y", function (d) {
+                    return height - padding.bottom - d;
+                })
+                .attr("height", function (d) {
+                    return d;
+                })
+                .attr("width", rectWidth);
+
+        /*enter部分*/
+        var enterRect = updateRect.enter();
+        console.info(enterRect);
+        enterRect.append("rect")
+                .attr("x", function (d, i) {
+                    return padding.left + i * rectStep;
+                })
+                .attr("y", function (d) {
+                    return height - padding.bottom - d;
+                })
+                .attr("height", function (d) {
+                    return d;
+                })
+                .attr("width", rectWidth);
+        ;
+
+        /*exit部分*/
+        var exitRect = updateRect.exit();
+        console.info(exitRect);
+        exitRect.remove();
+
+//        文字部分
+        var updateText = svg.selectAll("text")
+                .data(dataset)
+                .attr("x", function (d, i) {
+                    return padding.left + i * rectStep;
+                })
+                .attr("y", function (d) {
+                    return height - padding.bottom - d;
+                })
+                .attr("text-anchor", "middle")
+                .attr("dx", rectWidth / 2)
+//                .attr("dy", "1em")
+                .text(function (d) {
+                    return d;
+                });
+
+        var enterText = updateText.enter();
+        enterText.append("text")
+                .attr("x", function (d, i) {
+                    return padding.left + i * rectStep;
+                })
+                .attr("y", function (d) {
+                    return height - padding.bottom - d;
+                })
+                .attr("text-anchor", "middle")
+                .attr("dx", rectWidth / 2)
+//                .attr("dy", "-1em")
+                .text(function (d) {
+                    return d;
+                });
+
+        var exitText = updateText.exit();
+        exitText.remove();
+
+    }
+
+
+</script>
+</body>
+</html>

@@ -12,16 +12,47 @@
     <!--<script src="../scripts/plotTradeLine.js" charset="UTF-8"></script>&lt;!&ndash;绘制交易线&ndash;&gt;-->
     <script src="../scripts/GetSimulateData.js" charset="utf-8"></script><!--获取模拟数据-->
     <!--<script src="../scripts/average.js" charset="utf-8"></script>&lt;!&ndash;均线&ndash;&gt;-->
-    <!--<script src="../scripts/Grids.js" charset="UTF-8"></script>&lt;!&ndash;网格线&ndash;&gt;-->
 </head>
 <body>
 
 <div id="single">
     <div id="singleParamSet">
-        <input type="checkbox">K线</input>
-        <input type="checkbox">均&nbsp;线</input>
-        <input type="checkbox" onchange="toggleProfitPath()">通道线</input>
-        <input type="checkbox">成交量</input>
+        <div>
+            <input type="checkbox" value="">K线</input>
+        </div>
+        <div>
+            <input type="checkbox" value="">通道线</input>
+        </div>
+        <div>
+            <input type="checkbox" value="">均&nbsp;线</input>
+        </div>
+        <div>
+            <input type="checkbox" value="">成交量</input>
+        </div>
+        <div>
+            <input type="checkbox" checked="checked" value="" onchange="toggleProfitPath()">利润曲线</input>
+        </div>
+        <div>
+            <input type="checkbox" checked="checked" value="" onchange="toggleTradeLine()">交易记录线</input>
+        </div>
+        <div>
+            <label>入场天数<input type="text" style="width: 40px"></label>
+        </div>
+        <div>
+            <label>出场天数<input type="text" style="width: 40px"></label>
+        </div>
+        <div>
+            <label>初始资金<input type="text" style="width: 80px"></label>
+        </div>
+        <div>
+            <select multiple style="width: 100px;">
+                <option>1</option>
+                <option>1</option>
+                <option>1</option>
+                <option>1</option>
+                <option>1</option>
+            </select>
+        </div>
     </div>
     <div id="singleProfit">
         <div id="detail">利润：<span id="totalProfit"></span>开：<span id="openPrice"></span>高：<span id="highPrice"></span>低：<span
@@ -56,7 +87,7 @@
 <script type="text/javascript">
     window.onload = function () {
 
-        /*交易品种数据*/
+        /*实际数据*/
         var csvData = getDataFromCSV("../data/candle.csv", 'text', false);
 
 //        /*模拟数据*/
@@ -115,11 +146,6 @@
 
         /*绘制交易记录线*/
         plotTradeLine("singleCandle", sPP, csvData, dataOfChanelStrategy);
-
-        /*无日期数据的每日利润数组,用来计算最大衰落*/
-        var profitDataWithoutDate = profitData.map(function (d) {
-            return d[1];
-        });
 
         /*缩放步长*/
         var step = 20;
@@ -193,7 +219,7 @@
         addTradeRecordTable(document.getElementsByTagName("tbody")[0], tradeData);
 
         /*获取统计数据*/
-        var statistics = getStatistics(tradeData, profitData, balance, csvData, profitDataWithoutDate);
+        var statistics = getStatistics(tradeData, profitData, balance, csvData);
 
         /*输出统计数据*/
         plotStatics("singleCandle", sPP, statistics);
@@ -303,26 +329,25 @@
         }
         return closedTrades;
 
+        /*已平仓闭环交易对象*/
+        function tradesClosed(inTime, outTime, tradeAmount, tradeDirection, inPrice, outPrice) {
+            /*进场时间*/
+            this.inTime = inTime;
+            /*出场时间*/
+            this.outTime = outTime;
+            /*交易数量*/
+            this.tradeAmount = tradeAmount;
+            /*交易类型*/
+            this.tradeDirection = tradeDirection;
+            /*进场价格*/
+            this.inPrice = inPrice;
+            /*出场价格*/
+            this.outPrice = outPrice;
+
+        }
     }
 
-    /*已平仓闭环交易对象*/
-    function tradesClosed(inTime, outTime, tradeAmount, tradeDirection, inPrice, outPrice) {
-        /*进场时间*/
-        this.inTime = inTime;
-        /*出场时间*/
-        this.outTime = outTime;
-        /*交易数量*/
-        this.tradeAmount = tradeAmount;
-        /*交易类型*/
-        this.tradeDirection = tradeDirection;
-        /*进场价格*/
-        this.inPrice = inPrice;
-        /*出场价格*/
-        this.outPrice = outPrice;
-
-    }
-
-    /*历史交易数据表格函数*/
+    /*添加历史交易数据表格函数*/
     function addTradeRecordTable(tBody, tradeData) {
 
         /*添加交易数据记录*/
@@ -444,7 +469,7 @@
     }
 
     /*统计数据*/
-    function getStatistics(tradeData, profitData, balance, csvData, profitDataWithoutDate) {
+    function getStatistics(tradeData, profitData, balance, csvData) {
         /*所有已平仓闭环交易*/
         var closedTrades = getClosedTrade(tradeData);
         /*已平仓交易总利润*/
@@ -512,6 +537,11 @@
         var winRate = Math.round((earnTrades.length / closedTrades.length) * 100) / 100
         statistics.push({"WinRate": winRate});
 
+        /*无日期数据的每日利润数组,用来计算最大衰落*/
+        var profitDataWithoutDate = profitData.map(function (d) {
+            return d[1];
+        });
+
         /*最大衰落*/
         var maxDrawDown = maxFading(profitDataWithoutDate, balance).percentDown;
         statistics.push({"MaxDrawDown": maxDrawDown});
@@ -524,6 +554,14 @@
         var target = document.getElementById("profitPath");
         var toggle = target.getAttribute("display");
         toggle == "none" ? target.setAttribute("display", "block") : target.setAttribute("display", "none");
+    }
+    function toggleTradeLine() {
+        var target = document.getElementsByClassName("tradeLine");
+        for (var i = 0; i < target.length; i++) {
+            var obj = target[i];
+            var toggle = obj.getAttribute("stroke-width");
+            toggle == "2px" ? obj.setAttribute("stroke-width", "0px") : obj.setAttribute("stroke-width", "2px");
+        }
     }
 
     //    var options = document.getElementById("selectedOptions").options;

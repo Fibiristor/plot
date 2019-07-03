@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>datum</title>
+    <script src="../scripts/d3.js"></script>
+    <script src="../scripts/calculate.js"></script>
+</head>
+<body>
+<p>Lion</p>
+<p>Tiger</p>
+<p>Leopard</p>
+<script>
+    var persons = [{sex: "男", age: 48, name: "张某某"},
+        {sex: "男", age: 42, name: "李某某"},
+        {sex: "男", age: 45, name: "王某某"},
+        {sex: "女", age: 33, name: "赵某某"},
+        {sex: "女", age: 31, name: "孙某某"}
+    ];
+    var nest = d3.nest()
+            .key(function (d) {
+                return d.sex;
+            })
+            .sortValues(function (a,b) {
+                return d3.ascending(a.age,b.age)
+            })
+            .map(persons,d3.map);
+    console.info(nest.values());
+
+</script>
+</body>
+</html>

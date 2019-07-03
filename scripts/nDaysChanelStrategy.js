@@ -329,6 +329,8 @@ function nDaysChanelStrategy(csvData, inDays, outDays, balance) {
             //跟踪止损1:收盘价高于N * ATR
 
             //跟踪止损2:收盘价高于n日最高价
+
+
             if (csvData[i][4] > outDaysTopValues[i - 1]) {
                 // var codeTemp = csvData[i][0].concat("-").concat(csvData[i][4]).concat("-").concat("short-empty");   //生成空头平仓交易代码
                 // var preCodeTemp = positionStatus.code;              //取关联入场交易代码

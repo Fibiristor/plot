@@ -1,7 +1,4 @@
-/**
- * Created by fibiristor on 2018/8/10.
- */
-function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
+function plotTradeLine(cellId, sPP, csvData, dataOfChanelStrategy, beginIndex) {
 
     csvData = csvData.slice(beginIndex);
 
@@ -9,16 +6,18 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
 
     var svgCell = document.getElementById(cellId).firstElementChild.firstElementChild;
     var svg = d3.select(svgCell);
-    var width = svgCell.clientWidth;
-    var height = svgCell.clientHeight;
+
+    var width = sPP.width;
+    var height = sPP.height;
 
     //绘图区域边框尺寸
-    var padding = {top: 30, right: 70, bottom: 30, left: 70};
+    var padding = sPP.padding;
 
     var tDate = [];
     for (var i = 0; i < csvData.length; i++) {
         tDate[i] = csvData[i][0];
     }
+    // var tDate = sPP.tDate;
 
 
     //获取最高价中的最大值
@@ -32,15 +31,17 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
     });
 
 
-    //candle部分x轴比例尺
+    // candle部分x轴比例尺
     var xScale = d3.scale.ordinal()  //序数比例尺
         .domain(tDate)
         .rangeBands([0, width - padding.left - padding.right], 0.2);
+    // var xScale = sPP.xScale;
 
     //candle部分y轴比例尺
     var yScale = d3.scale.linear()  //线性比例尺
         .domain([valueMin, valueMax])
         .rangeRound([0, height - padding.top - padding.bottom]);
+    // var yScale = sPP.yScale;
 
     //交易连线数据
     var tradeArray = [];
@@ -49,6 +50,7 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
         if (tradeData[i].direction == "long") {
             //多头建仓日期
             var buyDate = tradeData[i].tradeDate;
+            // var buyDate =  parseInt(new Date(tradeData[i].tradeDate).getTime());
             //建仓价格
             var buyPrice = tradeData[i].price;
             //建仓编号
@@ -60,6 +62,7 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
                     var sellPrice = tradeData[j].price;
                     //平仓日期
                     var sellDate = tradeData[j].tradeDate;
+                    // var sellDate =  parseInt(new Date(tradeData[j].tradeDate).getTime());
                     //被平仓头寸编号
                     var preCode = tradeData[j].preCode;
                     //将一个完整的多头建仓-平仓数据存入数组
@@ -80,6 +83,7 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
         if (tradeData[i].direction == "short") {
             //空头建仓日期
             var buyDate = tradeData[i].tradeDate;
+            // var buyDate =  parseInt(new Date(tradeData[i].tradeDate).getTime());
             //空头建仓价格
             var buyPrice = tradeData[i].price;
             //建仓编号
@@ -91,6 +95,7 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
                     var sellPrice = tradeData[j].price;
                     //平仓日期
                     var sellDate = tradeData[j].tradeDate;
+                    // var sellDate =  parseInt(new Date(tradeData[j].tradeDate).getTime());
                     //被平仓头寸编号
                     var preCode = tradeData[j].preCode;
                     //将一个完整的空头建仓-平仓数据存入数组
@@ -137,13 +142,18 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
     for (var i = 0; i < tradeArray.length; i++) {
         //建仓日期
         lineArray[i][0][0] = padding.left + xScale(tradeArray[i].buyDate) + xScale.rangeBand() * 0.5;
+        // lineArray[i][0][0] = padding.left + parseInt(new Date(tradeArray[i].buyDate).getTime()) + xScale.rangeBand() * 0.5;
         //建仓价格
         lineArray[i][0][1] = height - padding.bottom - yScale(tradeArray[i].buyPrice);
         //平仓日期
         lineArray[i][1][0] = padding.left + xScale(tradeArray[i].sellDate) + xScale.rangeBand() * 0.5;
+        // lineArray[i][1][0] = padding.left + xScale(parseInt(new Date(tradeArray[i].sellDate).getTime())) + xScale.rangeBand() * 0.5;
         //平仓价格
         lineArray[i][1][1] = height - padding.bottom - yScale(tradeArray[i].sellPrice);
     }
+
+    // parseInt(new Date(tradeArray[i].buyDate).getTime())
+    // parseInt(new Date(tradeArray[i].sellDate).getTime())
 
     //交易连线路径生成器
     var tradePath = d3.svg.line();
@@ -155,25 +165,21 @@ function plotTradeLine(cellId, csvData, dataOfChanelStrategy, beginIndex) {
         svg.append("path")
             .attr("d", tradePath(lineArray[i]))
             .attr("stroke", function () {
-                //判断利润：多头：平仓>建仓:red 否则green;
                 if (tradeArray[i].code.match(/long/)) {
-                    // var temp = lineArray[i][0][1] - lineArray[i][1][1];
-                    // profit.push(temp);
                     /*利用设置元素的自定义属性来绑定数据*/
                     this.setAttribute("buyDate", tradeArray[i].buyDate);
                     this.setAttribute("buyPrice", tradeArray[i].buyPrice);
                     this.setAttribute("sellDate", tradeArray[i].sellDate);
                     this.setAttribute("sellPrice", tradeArray[i].sellPrice);
+                    //判断利润：多头：平仓>建仓:red 否则green;
                     return lineArray[i][0][1] > lineArray[i][1][1] ? "red" : "green";
-                    //判断利润：空头：平仓<建仓:red 否则green;
                 } else if (tradeArray[i].code.match(/short/)) {
-                    // var temp = lineArray[i][1][1] - lineArray[i][0][1];
-                    // profit.push(temp);
                     /*利用设置元素的自定义属性来绑定数据*/
                     this.setAttribute("buyDate", tradeArray[i].buyDate);
                     this.setAttribute("buyPrice", tradeArray[i].buyPrice);
                     this.setAttribute("sellDate", tradeArray[i].sellDate);
                     this.setAttribute("sellPrice", tradeArray[i].sellPrice);
+                    //判断利润：空头：平仓<建仓:red 否则green;
                     return lineArray[i][0][1] > lineArray[i][1][1] ? "green" : "red";
                 }
             })

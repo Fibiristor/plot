@@ -25,8 +25,8 @@
     var width = 960,
             height = 500;
 
-    var randomX = d3.random.normal(width / 2, 80),
-            randomY = d3.random.normal(height / 2, 80);
+    var randomX = d3.random.normal(width / 2,200),
+            randomY = d3.random.normal(height / 2,100);
 
     var data = d3.range(2000).map(function () {
         return [randomX(), randomY()];
@@ -34,15 +34,17 @@
 
     //    console.info(data);
 
+    /*定义一个zoom*/
     var zoom = d3.behavior.zoom()
             .scaleExtent([1, 10])
             .on("zoom", zoomed);
 
+    /*在body中添加一个svg元素*/
     var svg = d3.select("body")
             .append("svg")
             .attr("width", width)
             .attr("height", height)
-            .append("g")
+//            .append("g")/*再在svg元素中添加一个g*/
             .call(zoom)
             .append("g");
 

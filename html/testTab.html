@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TestTab</title>
+    <style>
+        .project__left {
+            box-shadow: 0 0 0.5px #b4b4b4;
+            border-radius: 10px;
+            flex: 1.5;
+            height: 355px;
+            background: #fff;
+            margin-right: 10px;
+        }
+        .project__left__title {
+            height: 40px;
+            background: #f4f6f7;
+            -webkit-border-radius: 10px 10px 0 0 ;
+            -moz-border-radius: 10px 10px 0 0 ;
+            border-radius: 10px 10px 0 0 ;
+            font: 12px/40px "sans-serif";
+            color: #b0b0b0;
+            text-indent: 20px;
+        }
+        .project__left__ul {
+            list-style: none;
+            margin: 10px 0 0 16px;
+        }
+        .project__left__ulLI {
+            display: inline-block;
+            position: relative;
+            width: 74px;
+            line-height: 30px;
+            font: 12px/30px "sans-serif";
+            text-align: center;
+        }
+        .project__left__ulLI span {
+            display: block;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 5px 5px 0 0;
+            z-index: 1;
+            background: #ededf0;
+        }
+        .liInput {
+            position: absolute;
+            left: 0;
+            z-index: 99;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .liInput:checked + span {
+            background: #fff;
+            border: 1px solid #aaa;
+            border-bottom: 1px solid #fff;
+        }
+        .liInput:checked + span + .project__left__table {
+            display: block;
+        }
+        .project__left__table {
+            position: absolute;
+            width: 490px;
+            height: 250px;
+            top: 31px;
+            left: 0;
+            z-index: 0;
+            border: 1px solid #aaa;
+            -webkit-border-radius: 0 4px 4px 4px ;
+            -moz-border-radius: 0 4px 4px 4px;
+            border-radius: 0 4px 4px 4px;
+            display: none;
+        }
+        .project__left__table table {
+            width: 402px;
+            height: 184px;
+            font: 14px/33px "sans-serif";
+            text-align: center;
+            position: absolute;
+            border-collapse: collapse;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .project__left__table td {
+            border: 1px solid #ededf0;
+            height: 33px;
+        }
+        .project__left__table .tableActive {
+            background: #ededf0;
+        }
+        .table2 {
+            margin-left: -78px;
+        }
+        .table3 {
+            margin-left: -157px;
+        }
+        .table4 {
+            margin-left: -236px;
+        }
+        .table5 {
+            margin-left: -315px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="project__left">
+    <p class="project__left__title">第一组项目</p>
+    <ul class="project__left__ul">
+        <li class="project__left__ulLI">
+            <input type="radio" name="project" checked="checked" class="liInput">
+            <span>项目一</span>
+            <div class="project__left__table">
+                <table cellspacing="0">
+                    <tr>
+                        <td class="tableActive">购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                </table>
+            </div>
+        </li>
+        <li class="project__left__ulLI">
+            <input type="radio" name="project" class="liInput">
+            <span>项目二</span>
+            <div class="project__left__table table2">
+                <table cellspacing="0">
+                    <tr>
+                        <td class="tableActive">购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                </table>
+            </div>
+        </li>
+        <li class="project__left__ulLI">
+            <input type="radio" name="project" class="liInput">
+            <span>项目三</span>
+            <div class="project__left__table table3">
+                <table cellspacing="0">
+                    <tr>
+                        <td class="tableActive">购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                </table>
+            </div>
+        </li>
+        <li class="project__left__ulLI">
+            <input type="radio" name="project" class="liInput">
+            <span>项目四</span>
+            <div class="project__left__table table4">
+                <table cellspacing="0">
+                    <tr>
+                        <td class="tableActive">购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                </table>
+            </div>
+        </li>
+        <li class="project__left__ulLI">
+            <input type="radio" name="project" class="liInput">
+            <span>项目五</span>
+            <div class="project__left__table table5">
+                <table cellspacing="0">
+                    <tr>
+                        <td class="tableActive">购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                    <tr>
+                        <td>购买材料一</td><td>购买材料一</td><td>购买材料一</td><td>购买材料一</td>
+                    </tr>
+                </table>
+            </div>
+        </li>
+    </ul>
+</div>
+
+</body>
+</html>

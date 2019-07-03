@@ -21,7 +21,7 @@
 
 #singleCandle{
     width: 1400px;
-    height:400px;
+    height:580px;
     background-color:white;
 }
 #detail{
@@ -50,9 +50,8 @@
 
 .axis path,line{
     fill: none;
-    stroke: gray;
+    stroke: black;
     shape-rendering: crispEdges;
-    /*opacity: 0.2;*/
 }
 
 /*.tick line {*/
@@ -62,8 +61,7 @@
 /*}*/
 
 .tick line {
-    fill: none;
-    stroke: black;
+    stroke: 1px solid green;
     stroke-dasharray: 2;
     opacity: 0.2;
 }

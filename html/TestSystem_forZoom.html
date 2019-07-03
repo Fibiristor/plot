@@ -44,23 +44,25 @@
 //            svg.attr("transform", "translate(" + zoom.translate() + ")" + "scale(" +zoom.scale()+")");
 //            svg.select("circle.circle-object")
 //                    .attr("stroke-width",1/zoom.scale()+"px");
-            svg.select(".x.axis").call(xAxis);
+//            svg.select(".x.axis").call(xAxis);
 //            svg.select(".y.axis").call(yAxis);
 
 //            console.info(svg.select(".x.axis"));
 //            svg.select(".y.axis").call(yAxis);
 
-            svg.select("path.path_high")
-                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px")
-                    .attr("transform", "translate(" + zoom.translate() + ")" + "scale(" + zoom.scale() + ")");
-            svg.select("path.path_low")
-                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px");
-            svg.select("path.path_avg")
-                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px");
-            svg.selectAll("line")
-                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px");
-//            svg.selectAll("rect")
-//                    .attr("stroke-width",Math.round((1/zoom.scale()*100))/100+"px");
+            svg.select("path.path_high").call(transformFun);
+            svg.select("path.path_low").call(transformFun);
+            svg.select("path.path_avg").call(transformFun);
+            svg.selectAll("path.tradeLine").call(transformFun);
+            svg.selectAll("line").call(transformFun);
+            svg.selectAll("rect").call(transformFun);
+//            svg.
+//                    .attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px")
+//                    .attr("transform", "translate(" + zoom.translate() + ")" + "scale(" + zoom.scale() + ")");
+            function transformFun(selection) {
+                selection.attr("stroke-width", Math.round((1 / zoom.scale() * 100)) / 100 + "px")
+                        .attr("transform", "translate(" + zoom.translate() + ")" + "scale(" + zoom.scale() + ")");
+            }
         };
 
         /*交易品种数据*/
@@ -100,7 +102,6 @@
                 .append("g");
 
 
-
         /*绘制坐标轴*/
         var axisObject = plotAxis(svg, sPP);
         var xAxis = (axisObject.xAxis);
@@ -115,6 +116,12 @@
 
         /*绘制收盘价均线*/
         nDaysAveragePath("singleCandle", sPP, csvData, 60, "blue");
+        var inDays = 20;
+        var outDays = 10;
+        var balance = 500000;
+        var dataOfChanelStrategy = nDaysChanelStrategy(csvData, inDays, outDays, balance);
+
+        plotTradeLine("singleCandle",sPP,csvData,dataOfChanelStrategy);
 
     };
 
